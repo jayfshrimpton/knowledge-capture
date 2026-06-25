@@ -92,70 +92,219 @@ async function generateWord(doc: DocumentRow): Promise<Buffer> {
 // PDF export (pdfkit)
 // ---------------------------------------------------------------------------
 
+const COLOUR = {
+  navy:    '#1C3A5E',
+  slate:   '#475569',
+  amber:   '#F59E0B',
+  amberBg: '#FEF3C7',
+  grey:    '#94A3B8',
+} as const;
+
+const MARGIN = { top: 72, bottom: 72, left: 56, right: 56 } as const;
+const PAGE_WIDTH    = 595.28; // A4 pts
+const PAGE_HEIGHT   = 841.89;
+const CONTENT_WIDTH = PAGE_WIDTH - MARGIN.left - MARGIN.right;
+const HEADER_Y      = 20;
+const FOOTER_Y      = PAGE_HEIGHT - 50;
+
+function drawPageDecorations(
+  pdf: PDFKit.PDFDocument,
+  pageNumber: number,
+  totalPages: number,
+  docTitle: string,
+  authorName: string,
+): void {
+  pdf.save();
+
+  // Header separator line
+  pdf
+    .moveTo(MARGIN.left, HEADER_Y + 16)
+    .lineTo(PAGE_WIDTH - MARGIN.right, HEADER_Y + 16)
+    .strokeColor(COLOUR.navy)
+    .lineWidth(0.5)
+    .stroke();
+
+  // Header left: "Lore" logotype
+  pdf.font('Helvetica-Bold').fontSize(11).fillColor(COLOUR.navy)
+    .text('Lore', MARGIN.left, HEADER_Y, { lineBreak: false });
+
+  // Header right: document title
+  pdf.font('Helvetica').fontSize(9).fillColor(COLOUR.slate)
+    .text(docTitle, MARGIN.left, HEADER_Y, { width: CONTENT_WIDTH, align: 'right', lineBreak: false });
+
+  // Footer separator line
+  pdf
+    .moveTo(MARGIN.left, FOOTER_Y - 6)
+    .lineTo(PAGE_WIDTH - MARGIN.right, FOOTER_Y - 6)
+    .strokeColor(COLOUR.grey)
+    .lineWidth(0.5)
+    .stroke();
+
+  // Footer centre: page number
+  pdf.font('Helvetica').fontSize(8).fillColor(COLOUR.slate)
+    .text(`Page ${pageNumber} of ${totalPages}`, MARGIN.left, FOOTER_Y, {
+      width: CONTENT_WIDTH,
+      align: 'center',
+      lineBreak: false,
+    });
+
+  // Footer right: author / org name
+  if (authorName) {
+    pdf.font('Helvetica').fontSize(8).fillColor(COLOUR.slate)
+      .text(authorName, MARGIN.left, FOOTER_Y, {
+        width: CONTENT_WIDTH,
+        align: 'right',
+        lineBreak: false,
+      });
+  }
+
+  pdf.restore();
+}
+
+function drawSectionHeading(pdf: PDFKit.PDFDocument, text: string): void {
+  pdf.font('Helvetica-Bold').fontSize(14).fillColor(COLOUR.navy).text(text);
+  const ruleY = pdf.y + 2;
+  pdf
+    .moveTo(MARGIN.left, ruleY)
+    .lineTo(MARGIN.left + CONTENT_WIDTH, ruleY)
+    .strokeColor(COLOUR.navy)
+    .lineWidth(0.5)
+    .stroke();
+  pdf.moveDown(0.4);
+}
+
+function drawWarningsBox(pdf: PDFKit.PDFDocument, warnings: string[]): void {
+  const innerWidth = CONTENT_WIDTH - 18;
+
+  // Compute box height precisely using heightOfString for each item
+  const headingHeight = pdf.heightOfString('Gaps & Warnings', { width: innerWidth });
+  const warningHeights = warnings.map((w) =>
+    pdf.heightOfString(`• ${w}`, { width: innerWidth })
+  );
+  const totalWarningHeight = warningHeights.reduce((a, b) => a + b, 0);
+  const boxPadding = 10;
+  const boxHeight = boxPadding + headingHeight + 6 + totalWarningHeight + boxPadding;
+
+  // If the box won't fit on remaining page, start a new page
+  const spaceLeft = PAGE_HEIGHT - MARGIN.bottom - pdf.y;
+  if (spaceLeft < boxHeight) {
+    pdf.addPage();
+  }
+
+  const boxX = MARGIN.left;
+  const boxY = pdf.y;
+
+  // Amber background
+  pdf.rect(boxX, boxY, CONTENT_WIDTH, boxHeight).fillColor(COLOUR.amberBg).fill();
+
+  // Left accent bar
+  pdf.rect(boxX, boxY, 4, boxHeight).fillColor(COLOUR.amber).fill();
+
+  // Heading
+  pdf.font('Helvetica-Bold').fontSize(12).fillColor(COLOUR.amber)
+    .text('Gaps & Warnings', boxX + 14, boxY + boxPadding, { width: innerWidth, lineBreak: false });
+
+  // Warning items — continue from cursor after heading
+  pdf.moveDown(0.5);
+  pdf.font('Helvetica').fontSize(10).fillColor(COLOUR.slate);
+  warnings.forEach((w) => {
+    pdf.text(`• ${w}`, { width: innerWidth, indent: 0 });
+  });
+
+  pdf.moveDown(0.6);
+}
+
 function generatePdf(doc: DocumentRow): Promise<Buffer> {
   return new Promise((resolve, reject) => {
-    const pdf = new PDFDocument({ margin: 56, size: 'A4' });
+    const pdf = new PDFDocument({
+      size: 'A4',
+      margins: { top: MARGIN.top, bottom: MARGIN.bottom, left: MARGIN.left, right: MARGIN.right },
+      bufferPages: true,
+      info: { Title: doc.title, Author: doc.author_name ?? undefined },
+    });
+
     const chunks: Buffer[] = [];
     pdf.on('data', (c: Buffer) => chunks.push(c));
     pdf.on('end', () => resolve(Buffer.concat(chunks)));
     pdf.on('error', reject);
 
-    pdf.fontSize(22).font('Helvetica-Bold').text(doc.title);
+    // ---- Page 1 content ----
+
+    // Title
+    pdf.font('Helvetica-Bold').fontSize(26).fillColor(COLOUR.navy).text(doc.title);
     pdf.moveDown(0.3);
 
-    const meta: string[] = [];
-    if (doc.author_name) meta.push(`Author: ${doc.author_name}`);
-    meta.push(`Format: ${doc.format}`);
-    pdf.fontSize(9).font('Helvetica-Oblique').fillColor('#666').text(meta.join('   •   '));
-    pdf.fillColor('#000');
+    // Metadata line
+    const metaParts: string[] = [];
+    if (doc.author_name) metaParts.push(`Author: ${doc.author_name}`);
+    metaParts.push(`Format: ${doc.format}`);
+    metaParts.push(new Date(doc.created_at).toLocaleDateString('en-GB', { dateStyle: 'medium' }));
+    pdf.font('Helvetica-Oblique').fontSize(9).fillColor(COLOUR.slate)
+      .text(metaParts.join('   •   '));
     pdf.moveDown(0.6);
 
+    // Summary
     if (doc.summary) {
-      pdf.fontSize(11).font('Helvetica').text(doc.summary);
-      pdf.moveDown(0.6);
+      pdf.font('Helvetica').fontSize(11).fillColor(COLOUR.slate)
+        .text(doc.summary, { lineGap: 3 });
+      pdf.moveDown(0.8);
     }
 
+    // Sections
     const sections: DocumentSection[] = doc.content ?? [];
     sections.forEach((section, idx) => {
       if (section.heading) {
-        pdf.fontSize(14).font('Helvetica-Bold').text(section.heading);
-        pdf.moveDown(0.2);
+        drawSectionHeading(pdf, section.heading);
       }
 
-      const body = doc.format === 'procedure' ? section.desc ?? section.content : section.content ?? section.desc;
+      const body =
+        doc.format === 'procedure'
+          ? section.desc ?? section.content
+          : section.content ?? section.desc;
+
       if (body) {
         const prefix = doc.format === 'procedure' ? `${idx + 1}. ` : '';
-        pdf.fontSize(11).font('Helvetica').text(`${prefix}${body}`);
-        pdf.moveDown(0.2);
+        pdf.font('Helvetica').fontSize(11).fillColor(COLOUR.slate)
+          .text(`${prefix}${body}`, { lineGap: 3 });
+        pdf.moveDown(0.3);
       }
 
       (section.items ?? []).forEach((item) => {
         const bullet = doc.format === 'checklist' ? '☐ ' : '• ';
-        pdf.fontSize(11).font('Helvetica').text(`${bullet}${item}`, { indent: 12 });
+        pdf.font('Helvetica').fontSize(11).fillColor(COLOUR.slate)
+          .text(`${bullet}${item}`, { indent: 14, lineGap: 2 });
       });
 
-      pdf.moveDown(0.4);
+      pdf.moveDown(0.5);
     });
 
+    // Diagram description
     if (doc.format === 'diagram' && doc.diagram_data?.description) {
-      pdf.fontSize(14).font('Helvetica-Bold').text('System description');
-      pdf.moveDown(0.2);
-      pdf.fontSize(11).font('Helvetica').text(doc.diagram_data.description);
-      pdf.moveDown(0.4);
+      drawSectionHeading(pdf, 'System Description');
+      pdf.font('Helvetica').fontSize(11).fillColor(COLOUR.slate)
+        .text(doc.diagram_data.description, { lineGap: 3 });
+      pdf.moveDown(0.5);
     }
 
-    if (doc.warnings && doc.warnings.length) {
-      pdf.fontSize(14).font('Helvetica-Bold').fillColor('#b45309').text('Gaps & warnings');
-      pdf.fillColor('#000');
-      pdf.moveDown(0.2);
-      doc.warnings.forEach((w) => pdf.fontSize(11).font('Helvetica').text(`• ${w}`, { indent: 12 }));
-      pdf.moveDown(0.4);
+    // Gaps & warnings
+    if (doc.warnings && doc.warnings.length > 0) {
+      drawWarningsBox(pdf, doc.warnings);
     }
 
-    if (doc.tags && doc.tags.length) {
-      pdf.fontSize(9).font('Helvetica-Oblique').fillColor('#666').text(`Tags: ${doc.tags.join(', ')}`);
+    // Tags
+    if (doc.tags && doc.tags.length > 0) {
+      pdf.font('Helvetica-Oblique').fontSize(9).fillColor(COLOUR.grey)
+        .text(`Tags: ${doc.tags.join(', ')}`);
     }
 
+    // ---- Post-pass: draw headers and footers on every buffered page ----
+    const { count: totalPages } = pdf.bufferedPageRange();
+    for (let i = 0; i < totalPages; i++) {
+      pdf.switchToPage(i);
+      drawPageDecorations(pdf, i + 1, totalPages, doc.title, doc.author_name ?? '');
+    }
+
+    pdf.flushPages();
     pdf.end();
   });
 }
