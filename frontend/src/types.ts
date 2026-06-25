@@ -40,6 +40,7 @@ export interface DocumentRow {
   tags: string[] | null;
   raw_input: string | null;
   source_file_path: string | null;
+  source: 'ai' | 'template';
   version: number;
   created_at: string;
   updated_at: string;
@@ -53,6 +54,7 @@ export interface DocumentListItem {
   format: DocumentFormat;
   summary: string | null;
   tags: string[] | null;
+  source: 'ai' | 'template';
   created_at: string;
   updated_at: string;
 }

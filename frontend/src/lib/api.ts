@@ -104,3 +104,52 @@ export async function exportDocument(id: string, format: 'word' | 'pdf'): Promis
   }
   return res.blob();
 }
+
+// ---------------------------------------------------------------------------
+// Templates
+// ---------------------------------------------------------------------------
+
+export interface TemplateListItem {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+}
+
+export type TemplateFieldType = 'text' | 'textarea' | 'list' | 'date' | 'select';
+
+export interface TemplateField {
+  id: string;
+  label: string;
+  type: TemplateFieldType;
+  placeholder?: string;
+  required?: boolean;
+  options?: string[];
+  itemPlaceholder?: string;
+}
+
+export interface TemplateSchema extends TemplateListItem {
+  fields: TemplateField[];
+}
+
+export async function listTemplates(): Promise<TemplateListItem[]> {
+  const res = await fetch(`${API_URL}/api/templates`, { headers: await authHeader() });
+  return handle<TemplateListItem[]>(res);
+}
+
+export async function getTemplate(id: string): Promise<TemplateSchema> {
+  const res = await fetch(`${API_URL}/api/templates/${id}`, { headers: await authHeader() });
+  return handle<TemplateSchema>(res);
+}
+
+export async function createFromTemplate(
+  id: string,
+  payload: { title: string; author?: string; values: Record<string, string | string[]> },
+): Promise<DocumentRow> {
+  const res = await fetch(`${API_URL}/api/templates/${id}/create`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...(await authHeader()) },
+    body: JSON.stringify(payload),
+  });
+  return handle<DocumentRow>(res);
+}

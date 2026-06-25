@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { requireAuth } from '../middleware/auth';
 import { structureNotes } from '../services/gemini';
 import { supabaseAdmin } from '../lib/supabase';
+import { logger } from '../lib/logger';
 
 const router = Router();
 
@@ -36,11 +37,49 @@ router.post('/capture', requireAuth, async (req, res) => {
   let structured;
   try {
     structured = await structureNotes(title, author || 'Unknown', rawText);
-  } catch (err) {
-    console.error('Gemini structuring failed:', err);
-    return res
-      .status(502)
-      .json({ error: 'The AI service could not process this input. Please try again.' });
+  } catch (geminiErr) {
+    logger.error('Gemini structuring failed after all retries', {
+      route: 'POST /api/capture',
+      errorType: geminiErr instanceof Error ? geminiErr.constructor.name : 'UnknownError',
+    });
+
+    const { data: draftData, error: draftError } = await supabaseAdmin
+      .from('documents')
+      .insert({
+        org_id: orgId,
+        created_by: userId,
+        title,
+        author_name: author || null,
+        format: 'unstructured',
+        status: 'draft',
+        summary: null,
+        content: [],
+        diagram_data: null,
+        warnings: ['Content could not be structured — AI service was unavailable.'],
+        tags: [],
+        raw_input: rawText,
+        source_file_path: sourceFilePath,
+        source: 'ai',
+      })
+      .select('id')
+      .single();
+
+    if (draftError || !draftData) {
+      logger.error('Draft save failed during graceful degradation', {
+        route: 'POST /api/capture',
+        errorType: 'SupabaseInsertError',
+      });
+      return res.status(500).json({
+        error: 'The AI service is unavailable and we were unable to save your content. Please try again later.',
+      });
+    }
+
+    return res.status(200).json({
+      degraded: true,
+      documentId: draftData.id,
+      message:
+        "We couldn't connect to the AI service — your content has been saved as a draft. You can retry structuring it from your document library.",
+    });
   }
 
   const { data, error } = await supabaseAdmin
@@ -63,7 +102,7 @@ router.post('/capture', requireAuth, async (req, res) => {
     .single();
 
   if (error) {
-    console.error('Document insert failed:', error);
+    logger.error('Document insert failed', { route: 'POST /api/capture', errorType: 'SupabaseInsertError' });
     return res.status(500).json({ error: 'Failed to save document' });
   }
 

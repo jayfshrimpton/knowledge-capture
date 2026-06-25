@@ -3,11 +3,11 @@ import { DocumentRow, DocumentFormat } from '../types';
 import DiagramView from './DiagramView';
 import ExportButtons from './ExportButtons';
 
-const FORMAT_BADGE: Record<DocumentFormat, string> = {
-  procedure: 'bg-blue-100 text-blue-800',
-  checklist: 'bg-green-100 text-green-800',
-  reference: 'bg-purple-100 text-purple-800',
-  diagram: 'bg-amber-100 text-amber-800',
+const FORMAT_BADGE: Record<DocumentFormat, { bg: string; color: string }> = {
+  procedure: { bg: 'var(--color-lochmara-lightest)', color: 'var(--color-lochmara-dark)' },
+  checklist: { bg: 'var(--status-success-subtle)',   color: '#549038' },
+  reference: { bg: '#f3f0fa',                         color: '#5b3fa6' },
+  diagram:   { bg: 'var(--status-warning-subtle)',    color: '#cc552a' },
 };
 
 type Tab = 'document' | 'warnings' | 'tags';
@@ -16,76 +16,175 @@ export default function DocumentOutput({ doc }: { doc: DocumentRow }) {
   const [tab, setTab] = useState<Tab>('document');
   const warnings = doc.warnings ?? [];
   const tags = doc.tags ?? [];
+  const badge = FORMAT_BADGE[doc.format];
 
-  const tabButton = (id: Tab, label: string, count?: number) => (
-    <button
-      onClick={() => setTab(id)}
-      className={`relative px-4 py-2 text-sm font-medium ${
-        tab === id ? 'border-b-2 border-brand-600 text-brand-700' : 'text-slate-500 hover:text-slate-700'
-      }`}
-    >
-      {label}
-      {count !== undefined && count > 0 && (
-        <span className="ml-1.5 rounded-full bg-slate-200 px-1.5 text-xs text-slate-700">{count}</span>
-      )}
-    </button>
-  );
+  function TabButton({ id, label, count }: { id: Tab; label: string; count?: number }) {
+    const active = tab === id;
+    return (
+      <button
+        onClick={() => setTab(id)}
+        style={{
+          padding: '0.75rem 1rem',
+          fontSize: '0.875rem',
+          fontWeight: active ? 600 : 400,
+          color: active ? 'var(--accent)' : 'var(--text-muted)',
+          background: 'none',
+          border: 'none',
+          borderBottom: `2px solid ${active ? 'var(--accent)' : 'transparent'}`,
+          cursor: 'pointer',
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '0.375rem',
+          transition: `color var(--duration-fast) var(--ease-standard),
+                       border-color var(--duration-fast) var(--ease-standard)`,
+        }}
+      >
+        {label}
+        {count !== undefined && count > 0 && (
+          <span
+            style={{
+              fontSize: '0.6875rem',
+              fontWeight: 600,
+              background: active ? 'var(--accent-subtle)' : 'var(--color-neutral-lightest)',
+              color: active ? 'var(--accent)' : 'var(--text-muted)',
+              borderRadius: '9999px',
+              padding: '0 0.4375rem',
+              lineHeight: '1.4rem',
+              minWidth: '1.25rem',
+              textAlign: 'center',
+            }}
+          >
+            {count}
+          </span>
+        )}
+      </button>
+    );
+  }
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
-      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-200 p-5">
+    <div className="st-card" style={{ overflow: 'hidden' }}>
+      {/* Header */}
+      <div
+        style={{
+          padding: '1.25rem 1.5rem',
+          borderBottom: '1px solid var(--border-subtle)',
+          display: 'flex',
+          flexWrap: 'wrap',
+          alignItems: 'flex-start',
+          justifyContent: 'space-between',
+          gap: '1rem',
+        }}
+      >
         <div>
-          <div className="flex items-center gap-2">
-            <h2 className="text-lg font-semibold text-slate-900">{doc.title}</h2>
-            <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${FORMAT_BADGE[doc.format]}`}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', flexWrap: 'wrap' }}>
+            <h2
+              style={{
+                fontFamily: '"Raleway", sans-serif',
+                fontWeight: 500,
+                fontSize: '1.25rem',
+                color: 'var(--text-primary)',
+                letterSpacing: '-0.01em',
+              }}
+            >
+              {doc.title}
+            </h2>
+            <span
+              style={{
+                fontSize: '0.75rem',
+                fontWeight: 600,
+                padding: '0.125rem 0.5rem',
+                borderRadius: 'var(--radius-badge)',
+                background: badge.bg,
+                color: badge.color,
+                textTransform: 'capitalize',
+              }}
+            >
               {doc.format}
             </span>
           </div>
-          {doc.summary && <p className="mt-1 text-sm text-slate-600">{doc.summary}</p>}
+          {doc.summary && (
+            <p style={{ marginTop: '0.375rem', fontSize: '0.9375rem', color: 'var(--text-secondary)' }}>
+              {doc.summary}
+            </p>
+          )}
           {doc.author_name && (
-            <p className="mt-1 text-xs text-slate-400">By {doc.author_name}</p>
+            <p style={{ marginTop: '0.25rem', fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
+              By {doc.author_name}
+            </p>
           )}
         </div>
         <ExportButtons documentId={doc.id} title={doc.title} />
       </div>
 
-      <div className="flex border-b border-slate-200 px-3">
-        {tabButton('document', 'Document')}
-        {tabButton('warnings', 'Gaps & warnings', warnings.length)}
-        {tabButton('tags', 'Tags', tags.length)}
+      {/* Tabs */}
+      <div
+        style={{
+          display: 'flex',
+          borderBottom: '1px solid var(--border-subtle)',
+          padding: '0 0.5rem',
+          gap: '0.25rem',
+        }}
+      >
+        <TabButton id="document" label="Document" />
+        <TabButton id="warnings" label="Gaps & warnings" count={warnings.length} />
+        <TabButton id="tags" label="Tags" count={tags.length} />
       </div>
 
-      <div className="p-5">
+      {/* Tab content */}
+      <div style={{ padding: '1.5rem' }}>
         {tab === 'document' && <DocumentBody doc={doc} />}
 
         {tab === 'warnings' &&
           (warnings.length ? (
-            <ul className="space-y-2">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
               {warnings.map((w, i) => (
-                <li
+                <div
                   key={i}
-                  className="flex gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900"
+                  style={{
+                    display: 'flex',
+                    gap: '0.625rem',
+                    padding: '0.75rem 1rem',
+                    borderRadius: 'var(--radius-card)',
+                    border: '1px solid #fde68a',
+                    background: 'var(--status-warning-subtle)',
+                    fontSize: '0.875rem',
+                    color: '#7c4a0c',
+                  }}
                 >
-                  <span aria-hidden>⚠️</span>
+                  <span style={{ flexShrink: 0 }}>⚠</span>
                   <span>{w}</span>
-                </li>
+                </div>
               ))}
-            </ul>
+            </div>
           ) : (
-            <p className="text-sm text-slate-500">No gaps or warnings were flagged.</p>
+            <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+              No gaps or warnings were flagged.
+            </p>
           ))}
 
         {tab === 'tags' &&
           (tags.length ? (
-            <div className="flex flex-wrap gap-2">
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
               {tags.map((t) => (
-                <span key={t} className="rounded-full bg-slate-100 px-3 py-1 text-sm text-slate-700">
+                <span
+                  key={t}
+                  style={{
+                    padding: '0.25rem 0.75rem',
+                    borderRadius: 'var(--radius-tag)',
+                    background: 'var(--surface-subtle)',
+                    border: '1px solid var(--border-default)',
+                    fontSize: '0.8125rem',
+                    color: 'var(--text-secondary)',
+                  }}
+                >
                   #{t}
                 </span>
               ))}
             </div>
           ) : (
-            <p className="text-sm text-slate-500">No tags were generated.</p>
+            <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+              No tags were generated.
+            </p>
           ))}
       </div>
     </div>
@@ -97,12 +196,24 @@ function DocumentBody({ doc }: { doc: DocumentRow }) {
 
   if (doc.format === 'diagram' && doc.diagram_data) {
     return (
-      <div className="space-y-5">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
         <DiagramView diagram={doc.diagram_data} />
         {doc.diagram_data.description && (
           <div>
-            <h3 className="mb-1 text-sm font-semibold text-slate-700">System description</h3>
-            <p className="whitespace-pre-wrap text-sm text-slate-700">{doc.diagram_data.description}</p>
+            <h3
+              style={{
+                fontFamily: '"Raleway", sans-serif',
+                fontSize: '0.9375rem',
+                fontWeight: 600,
+                color: 'var(--text-secondary)',
+                marginBottom: '0.375rem',
+              }}
+            >
+              System description
+            </h3>
+            <p style={{ whiteSpace: 'pre-wrap', fontSize: '0.9375rem', color: 'var(--text-secondary)' }}>
+              {doc.diagram_data.description}
+            </p>
           </div>
         )}
         {sections.length > 0 && <Sections doc={doc} />}
@@ -116,37 +227,89 @@ function DocumentBody({ doc }: { doc: DocumentRow }) {
 function Sections({ doc }: { doc: DocumentRow }) {
   const sections = doc.content ?? [];
   if (sections.length === 0) {
-    return <p className="text-sm text-slate-500">No content was generated.</p>;
+    return <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>No content was generated.</p>;
   }
 
   return (
-    <div className="space-y-5">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
       {sections.map((section, idx) => (
         <div key={idx}>
           {section.heading && (
-            <h3 className="mb-1 font-semibold text-slate-800">
-              {doc.format === 'procedure' && <span className="text-brand-600">{idx + 1}. </span>}
+            <h3
+              style={{
+                fontFamily: '"Raleway", sans-serif',
+                fontSize: '1rem',
+                fontWeight: 600,
+                color: 'var(--text-primary)',
+                marginBottom: '0.375rem',
+                display: 'flex',
+                gap: '0.375rem',
+              }}
+            >
+              {doc.format === 'procedure' && (
+                <span style={{ color: 'var(--accent)', flexShrink: 0 }}>{idx + 1}.</span>
+              )}
               {section.heading}
             </h3>
           )}
 
           {(section.content || section.desc) && (
-            <p className="whitespace-pre-wrap text-sm text-slate-700">
+            <p style={{ whiteSpace: 'pre-wrap', fontSize: '0.9375rem', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
               {!section.heading && doc.format === 'procedure' && (
-                <span className="font-semibold text-brand-600">{idx + 1}. </span>
+                <span style={{ fontWeight: 600, color: 'var(--accent)', marginRight: '0.375rem' }}>
+                  {idx + 1}.
+                </span>
               )}
               {section.content ?? section.desc}
             </p>
           )}
 
           {section.items && section.items.length > 0 && (
-            <ul className="mt-2 space-y-1">
+            <ul
+              style={{
+                marginTop: '0.5rem',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0.375rem',
+                paddingLeft: 0,
+                listStyle: 'none',
+              }}
+            >
               {section.items.map((item, i) => (
-                <li key={i} className="flex items-start gap-2 text-sm text-slate-700">
+                <li
+                  key={i}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: '0.625rem',
+                    fontSize: '0.9375rem',
+                    color: 'var(--text-secondary)',
+                    lineHeight: 1.5,
+                  }}
+                >
                   {doc.format === 'checklist' ? (
-                    <input type="checkbox" className="mt-1 h-4 w-4 rounded border-slate-300" readOnly />
+                    <input
+                      type="checkbox"
+                      style={{
+                        marginTop: '0.25rem',
+                        width: '1rem',
+                        height: '1rem',
+                        flexShrink: 0,
+                        accentColor: 'var(--accent)',
+                      }}
+                      readOnly
+                    />
                   ) : (
-                    <span className="mt-1 text-slate-400">•</span>
+                    <span
+                      style={{
+                        marginTop: '0.5625rem',
+                        width: '4px',
+                        height: '4px',
+                        borderRadius: '50%',
+                        background: 'var(--text-muted)',
+                        flexShrink: 0,
+                      }}
+                    />
                   )}
                   <span>{item}</span>
                 </li>

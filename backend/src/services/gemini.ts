@@ -1,5 +1,6 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { StructuredDocument, DocumentFormat } from '../types';
+import { withRetry } from '../lib/retry';
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 if (!GEMINI_API_KEY) {
@@ -97,16 +98,22 @@ export async function structureNotes(
   const basePrompt = buildUserPrompt(title, author, rawText);
 
   const attempt = async (prompt: string): Promise<StructuredDocument> => {
-    const result = await model.generateContent(prompt);
+    const result = await withRetry(() => model.generateContent(prompt), {
+      attempts: 3,
+      initialDelayMs: 500,
+    });
     const raw = result.response.text();
-    const parsed = JSON.parse(raw);
+    const parsed = JSON.parse(raw); // SyntaxError propagates out naturally
     return normalise(parsed);
   };
 
   try {
     return await attempt(basePrompt);
   } catch (firstErr) {
-    console.warn('Gemini JSON parse failed on first attempt, retrying...', firstErr);
+    if (!(firstErr instanceof SyntaxError)) {
+      throw firstErr; // Network/API error after all retries — propagate to caller
+    }
+    console.warn('Gemini JSON parse failed on first attempt, retrying with stricter prompt...');
     const stricter = `${basePrompt}\n\nIMPORTANT: Return only valid JSON, no other text.`;
     return await attempt(stricter);
   }

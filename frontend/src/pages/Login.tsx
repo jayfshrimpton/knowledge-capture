@@ -1,6 +1,16 @@
 import { useState } from 'react';
 import { supabase } from '../lib/supabase';
 
+const cardStyle: React.CSSProperties = {
+  width: '100%',
+  maxWidth: '24rem',
+  background: 'var(--surface-card)',
+  border: '1px solid var(--border-default)',
+  borderRadius: 'var(--radius-card)',
+  padding: '2.5rem',
+  boxShadow: 'var(--shadow-md)',
+};
+
 export default function Login() {
   const [mode, setMode] = useState<'login' | 'signup'>('login');
   const [email, setEmail] = useState('');
@@ -18,7 +28,6 @@ export default function Login() {
       if (mode === 'signup') {
         const { data, error } = await supabase.auth.signUp({ email, password });
         if (error) throw error;
-        // If email confirmation is disabled, a session is returned immediately.
         if (!data.session) {
           setInfo('Account created. Check your email to confirm, then sign in.');
           setMode('login');
@@ -35,58 +44,105 @@ export default function Login() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4">
-      <div className="w-full max-w-sm rounded-xl border border-slate-200 bg-white p-8 shadow-sm">
-        <h1 className="text-xl font-semibold text-slate-900">Knowledge Capture</h1>
-        <p className="mt-1 text-sm text-slate-500">
-          {mode === 'login' ? 'Sign in to continue' : 'Create your account'}
-        </p>
+    <div
+      style={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'var(--surface-subtle)',
+        padding: '1.5rem',
+      }}
+    >
+      <div style={cardStyle}>
+        {/* Logo */}
+        <div style={{ marginBottom: '2rem' }}>
+          <h1
+            style={{
+              fontFamily: '"Raleway", sans-serif',
+              fontWeight: 600,
+              fontSize: '1.5rem',
+              color: 'var(--text-primary)',
+              letterSpacing: '-0.01em',
+            }}
+          >
+            Structa
+          </h1>
+          <p style={{ marginTop: '0.375rem', fontSize: '0.9375rem', color: 'var(--text-muted)' }}>
+            {mode === 'login' ? 'Sign in to continue' : 'Create your account'}
+          </p>
+        </div>
 
-        <form onSubmit={submit} className="mt-6 space-y-4">
+        <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <div>
-            <label className="block text-sm font-medium text-slate-700">Email</label>
+            <label className="st-label" htmlFor="login-email">Email</label>
             <input
+              id="login-email"
               type="email"
               required
+              className="st-input"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
+              placeholder="you@company.com"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700">Password</label>
+            <label className="st-label" htmlFor="login-password">Password</label>
             <input
+              id="login-password"
               type="password"
               required
               minLength={6}
+              className="st-input"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
+              placeholder="••••••••"
             />
           </div>
 
-          {error && <p className="text-sm text-red-600">{error}</p>}
-          {info && <p className="text-sm text-green-700">{info}</p>}
+          {error && (
+            <p style={{ fontSize: '0.875rem', color: 'var(--status-warning)', fontWeight: 500 }}>
+              {error}
+            </p>
+          )}
+          {info && (
+            <p style={{ fontSize: '0.875rem', color: 'var(--status-success)', fontWeight: 500 }}>
+              {info}
+            </p>
+          )}
 
           <button
             type="submit"
+            className="btn-primary"
             disabled={busy}
-            className="w-full rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50"
+            style={{ width: '100%', marginTop: '0.25rem' }}
           >
             {busy ? 'Please wait…' : mode === 'login' ? 'Sign in' : 'Sign up'}
           </button>
         </form>
 
-        <button
-          onClick={() => {
-            setMode(mode === 'login' ? 'signup' : 'login');
-            setError(null);
-            setInfo(null);
-          }}
-          className="mt-4 w-full text-center text-sm text-brand-600 hover:text-brand-700"
-        >
-          {mode === 'login' ? "Don't have an account? Sign up" : 'Already have an account? Sign in'}
-        </button>
+        {/* Toggle mode */}
+        <div style={{ marginTop: '1.25rem', textAlign: 'center' }}>
+          <button
+            onClick={() => {
+              setMode(mode === 'login' ? 'signup' : 'login');
+              setError(null);
+              setInfo(null);
+            }}
+            style={{
+              fontSize: '0.875rem',
+              color: 'var(--accent)',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              fontWeight: 500,
+            }}
+          >
+            {mode === 'login'
+              ? "Don't have an account? Sign up"
+              : 'Already have an account? Sign in'}
+          </button>
+        </div>
       </div>
     </div>
   );

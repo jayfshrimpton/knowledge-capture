@@ -1,6 +1,6 @@
 // Shared types for the structured document produced by the Gemini pipeline.
 
-export type DocumentFormat = 'procedure' | 'checklist' | 'diagram' | 'reference';
+export type DocumentFormat = 'procedure' | 'checklist' | 'diagram' | 'reference' | 'unstructured';
 
 export interface DocumentSection {
   heading?: string;
@@ -57,6 +57,8 @@ export interface DocumentRow {
   tags: string[] | null;
   raw_input: string | null;
   source_file_path: string | null;
+  source: 'ai' | 'template';
+  status?: string;
   version: number;
   created_at: string;
   updated_at: string;

@@ -2,12 +2,374 @@
 @tailwind components;
 @tailwind utilities;
 
-html,
-body,
-#root {
+/* ============================================================
+   Structa — webfonts (served locally from /public/fonts)
+   ============================================================ */
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/inter-400.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("/fonts/inter-500.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("/fonts/inter-600.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/inter-700.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Raleway";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/raleway-400.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Raleway";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("/fonts/raleway-500.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Raleway";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("/fonts/raleway-600.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Raleway";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/raleway-700.woff2") format("woff2");
+}
+
+/* ============================================================
+   Structa — design tokens
+   ============================================================ */
+:root {
+  /* Neutral scale */
+  --color-white:            #ffffff;
+  --color-neutral-lightest: #f2f2f2;
+  --color-neutral-lighter:  #d9dad9;
+  --color-neutral-light:    #b4b5b3;
+  --color-neutral:          #828481;
+  --color-neutral-dark:     #50524f;
+  --color-neutral-darker:   #1e211d;
+  --color-neutral-darkest:  #050904;
+
+  /* Lochmara — primary blue */
+  --color-lochmara-lightest: #e5f1f9;
+  --color-lochmara-lighter:  #cce3f4;
+  --color-lochmara-light:    #4c9fdb;
+  --color-lochmara:          #0077cc;
+  --color-lochmara-dark:     #005fa3;
+  --color-lochmara-darker:   #002f51;
+  --color-lochmara-darkest:  #00233d;
+
+  /* Burning Orange — secondary / warning */
+  --color-orange:          #ff6b35;
+  --color-orange-lightest: #fff0ea;
+
+  /* Apple — success */
+  --color-apple:          #6ab547;
+  --color-apple-lightest: #f0f7ec;
+
+  /* Alpha overlays */
+  --color-ink-5:    color-mix(in srgb, var(--color-neutral-darkest), transparent 95%);
+  --color-ink-10:   color-mix(in srgb, var(--color-neutral-darkest), transparent 90%);
+  --color-ink-15:   color-mix(in srgb, var(--color-neutral-darkest), transparent 85%);
+  --color-ink-20:   color-mix(in srgb, var(--color-neutral-darkest), transparent 80%);
+  --color-ink-50:   color-mix(in srgb, var(--color-neutral-darkest), transparent 50%);
+  --color-white-10: color-mix(in srgb, var(--color-white), transparent 90%);
+  --color-white-20: color-mix(in srgb, var(--color-white), transparent 80%);
+
+  /* Semantic aliases */
+  --text-primary:   var(--color-neutral-darkest);
+  --text-secondary: var(--color-neutral-dark);
+  --text-muted:     var(--color-neutral);
+  --text-link:      var(--color-lochmara);
+
+  --surface-page:    var(--color-white);
+  --surface-card:    var(--color-white);
+  --surface-subtle:  var(--color-neutral-lightest);
+  --surface-inverse: var(--color-neutral-darkest);
+
+  --accent:        var(--color-lochmara);
+  --accent-hover:  var(--color-lochmara-dark);
+  --accent-subtle: var(--color-lochmara-lightest);
+
+  --border-default: var(--color-ink-15);
+  --border-strong:  var(--color-ink-20);
+  --border-subtle:  var(--color-ink-10);
+
+  --status-success:        var(--color-apple);
+  --status-success-subtle: var(--color-apple-lightest);
+  --status-warning:        var(--color-orange);
+  --status-warning-subtle: var(--color-orange-lightest);
+
+  /* Typography families & scale (used by marketing pages) */
+  --font-heading: "Raleway", "Helvetica Neue", Arial, sans-serif;
+  --font-body:    "Inter", "Helvetica Neue", Arial, sans-serif;
+  --font-mono:    ui-monospace, "SF Mono", Menlo, monospace;
+  --text-h1:      4.5rem;
+  --text-h2:      3.25rem;
+  --text-h3:      2.75rem;
+  --text-h4:      2.25rem;
+  --text-h5:      1.75rem;
+  --text-h6:      1.375rem;
+  --text-large:   1.375rem;
+  --text-medium:  1.125rem;
+  --text-regular: 1rem;
+  --text-small:   0.875rem;
+  --text-tiny:    0.75rem;
+
+  /* Additional color tokens (marketing pages) */
+  --color-apple-light:             #96cb7e;
+  --color-apple-dark:              #549038;
+  --color-apple-lightest:          #f0f7ec;
+  --color-lochmara-darkest:        #00233d;
+  --color-burning-orange:          #ff6b35;
+  --color-burning-orange-lightest: #fff0ea;
+  --color-ink-60:       color-mix(in srgb, var(--color-neutral-darkest), transparent 40%);
+  --text-on-dark:       var(--color-white);
+  --text-placeholder:   var(--color-ink-60);
+  --scrim:              color-mix(in srgb, var(--color-neutral-darkest), transparent 50%);
+  --accent-on:          var(--color-white);
+
+  /* Radius */
+  --radius-button:   0.375rem;
+  --radius-input:    0.375rem;
+  --radius-badge:    0.375rem;
+  --radius-tag:      0.25rem;
+  --radius-card:     0.5rem;
+  --radius-image:    0.5rem;
+  --radius-checkbox: 0.125rem;
+  --radius-pill:     9999px;
+
+  /* Shadows */
+  --shadow-xs: 0 1px 2px 0 rgba(5,9,4,0.05);
+  --shadow-sm: 0 1px 3px 0 rgba(5,9,4,0.08), 0 1px 2px -1px rgba(5,9,4,0.06);
+  --shadow-md: 0 4px 12px -2px rgba(5,9,4,0.10), 0 2px 6px -2px rgba(5,9,4,0.06);
+  --shadow-lg: 0 16px 40px -8px rgba(5,9,4,0.16);
+
+  /* Motion */
+  --ease-standard: cubic-bezier(0.4,0,0.2,1);
+  --duration-fast: 150ms;
+  --duration-base: 200ms;
+  --duration-slow: 300ms;
+}
+
+/* Mobile typography scale */
+@media (max-width: 991px) {
+  :root {
+    --text-h1: 2.75rem;
+    --text-h2: 2.5rem;
+    --text-h3: 2rem;
+    --text-h4: 1.5rem;
+    --text-h5: 1.25rem;
+    --text-h6: 1.125rem;
+    --text-large: 1.125rem;
+    --text-medium: 1rem;
+  }
+}
+
+/* Marketing page animations */
+@keyframes stFade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes stRise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Shared marketing input styles */
+.st-input {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  height: 2.625rem;
+  padding: 0 0.85rem;
+  border-radius: var(--radius-input);
+  border: 1px solid var(--border-default);
+  background: var(--surface-page);
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  color: var(--text-primary);
+  outline: none;
+  transition: border-color 150ms var(--ease-standard), box-shadow 150ms var(--ease-standard);
+}
+.st-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-subtle); }
+.st-input::placeholder { color: var(--text-placeholder); }
+
+.st-select {
+  display: block; width: 100%; box-sizing: border-box;
+  height: 2.625rem; padding: 0 2rem 0 0.85rem;
+  border-radius: var(--radius-input); border: 1px solid var(--border-default);
+  background: var(--surface-page); font-family: var(--font-body);
+  font-size: 0.9375rem; color: var(--text-primary); outline: none;
+  cursor: pointer; appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%238b8f98' viewBox='0 96 960 960'%3E%3Cpath d='M480 711 240 471l43-43 197 197 197-197 43 43-240 240Z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 0.6rem center;
+  transition: border-color 150ms;
+}
+.st-select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-subtle); }
+
+.st-textarea {
+  display: block; width: 100%; box-sizing: border-box;
+  padding: 0.65rem 0.85rem;
+  border-radius: var(--radius-input); border: 1px solid var(--border-default);
+  background: var(--surface-page); font-family: var(--font-body);
+  font-size: 0.9375rem; color: var(--text-primary); resize: vertical; outline: none;
+  transition: border-color 150ms;
+}
+.st-textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-subtle); }
+
+/* ============================================================
+   Base
+   ============================================================ */
+html, body, #root {
   height: 100%;
 }
 
 body {
-  @apply bg-slate-50 text-slate-900 antialiased;
+  font-family: "Inter", "Helvetica Neue", Arial, sans-serif;
+  font-weight: 400;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--text-primary);
+  background-color: var(--surface-subtle);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: "Raleway", "Helvetica Neue", Arial, sans-serif;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+/* ============================================================
+   Component utilities
+   ============================================================ */
+
+/* Primary button */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  height: 2.5rem;
+  padding: 0 1.25rem;
+  border-radius: var(--radius-button);
+  background-color: var(--accent);
+  color: #fff;
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: background-color var(--duration-fast) var(--ease-standard);
+  white-space: nowrap;
+  text-decoration: none;
+}
+.btn-primary:hover:not(:disabled) { background-color: var(--accent-hover); }
+.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Secondary (outline) button */
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  height: 2.5rem;
+  padding: 0 1.25rem;
+  border-radius: var(--radius-button);
+  background-color: transparent;
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border: 1px solid var(--border-strong);
+  cursor: pointer;
+  transition: background-color var(--duration-fast) var(--ease-standard);
+  white-space: nowrap;
+  text-decoration: none;
+}
+.btn-secondary:hover:not(:disabled) { background-color: var(--color-ink-5); }
+.btn-secondary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Text input */
+.st-input {
+  width: 100%;
+  height: 2.5rem;
+  padding: 0 0.75rem;
+  border-radius: var(--radius-input);
+  border: 1px solid var(--border-default);
+  background-color: var(--surface-card);
+  font-family: inherit;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  outline: none;
+  transition: border-color var(--duration-fast) var(--ease-standard),
+              box-shadow var(--duration-fast) var(--ease-standard);
+}
+.st-input::placeholder { color: var(--text-muted); }
+.st-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-subtle);
+}
+
+/* Textarea */
+.st-textarea {
+  width: 100%;
+  padding: 0.625rem 0.75rem;
+  border-radius: var(--radius-input);
+  border: 1px solid var(--border-default);
+  background-color: var(--surface-card);
+  font-family: inherit;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  line-height: 1.5;
+  outline: none;
+  resize: vertical;
+  transition: border-color var(--duration-fast) var(--ease-standard),
+              box-shadow var(--duration-fast) var(--ease-standard);
+}
+.st-textarea::placeholder { color: var(--text-muted); }
+.st-textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-subtle);
+}
+
+/* Card */
+.st-card {
+  background-color: var(--surface-card);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-card);
+}
+
+/* Label */
+.st-label {
+  display: block;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 0.375rem;
 }

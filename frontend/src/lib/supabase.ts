@@ -1,11 +1,13 @@
 import { createClient } from '@supabase/supabase-js';
 
 const url = import.meta.env.VITE_SUPABASE_URL as string;
-const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
+const publishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
 
-if (!url || !anonKey) {
+if (!url || !publishableKey) {
   // Surface a clear error during development rather than a cryptic runtime failure.
-  console.error('Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY. Check frontend/.env');
+  console.error(
+    'Missing VITE_SUPABASE_URL or VITE_SUPABASE_PUBLISHABLE_KEY. Check frontend/.env'
+  );
 }
 
-export const supabase = createClient(url, anonKey);
+export const supabase = createClient(url, publishableKey);

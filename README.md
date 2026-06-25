@@ -38,8 +38,9 @@ knowledge-capture/
 3. (Optional, recommended for local dev) In **Authentication → Providers →
    Email**, turn **off** "Confirm email" so signups return a session
    immediately. Otherwise users must confirm via email before signing in.
-4. From **Project Settings → API**, copy the Project URL, the `anon` key, and
-   the `service_role` key.
+4. From **Project Settings → API Keys**, copy the Project URL, the
+   **publishable** key (`sb_publishable_...`), and the **secret** key
+   (`sb_secret_...`). See [Understanding API keys](https://supabase.com/docs/guides/getting-started/api-keys).
 
 ## 2. Backend
 
@@ -55,9 +56,8 @@ npm run dev               # http://localhost:3001
 | Variable | Where to find it |
 |---|---|
 | `GEMINI_API_KEY` | Google AI Studio |
-| `SUPABASE_URL` | Supabase → Project Settings → API → Project URL |
-| `SUPABASE_SERVICE_ROLE_KEY` | Supabase → API → `service_role` (server only — never ship to the browser) |
-| `SUPABASE_ANON_KEY` | Supabase → API → `anon` |
+| `SUPABASE_URL` | Supabase → Project Settings → API Keys → Project URL |
+| `SUPABASE_SECRET_KEY` | Supabase → API Keys → secret key (`sb_secret_...`; server only — never ship to the browser) |
 | `PORT` | defaults to `3001` |
 | `CORS_ORIGINS` | comma-separated allowed origins, e.g. `http://localhost:5173` |
 
@@ -72,7 +72,7 @@ npm install
 npm run dev               # http://localhost:5173
 ```
 
-`.env` values: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_API_URL`
+`.env` values: `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `VITE_API_URL`
 (the backend base URL, e.g. `http://localhost:3001`).
 
 ## 4. First run

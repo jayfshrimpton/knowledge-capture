@@ -63,7 +63,6 @@ export default function CaptureForm({ onCreated }: { onCreated: (doc: DocumentRo
         sourceFilePath,
       });
       onCreated(doc);
-      // Reset the input for the next capture.
       setTitle('');
       setText('');
       setSourceFilePath(null);
@@ -76,70 +75,129 @@ export default function CaptureForm({ onCreated }: { onCreated: (doc: DocumentRo
   }
 
   return (
-    <form onSubmit={submit} className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <form onSubmit={submit} className="st-card" style={{ padding: '1.5rem' }}>
+      {/* Title + Author row */}
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+          gap: '1rem',
+          marginBottom: '1.25rem',
+        }}
+      >
         <div>
-          <label className="block text-sm font-medium text-slate-700">Title</label>
+          <label className="st-label" htmlFor="cap-title">Title</label>
           <input
+            id="cap-title"
+            className="st-input"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="e.g. Site B generator startup"
-            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-slate-700">Author</label>
+          <label className="st-label" htmlFor="cap-author">Author</label>
           <input
+            id="cap-author"
+            className="st-input"
             value={author}
             onChange={(e) => setAuthor(e.target.value)}
             placeholder="Your name"
-            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
           />
         </div>
       </div>
 
-      <div className="mt-4">
-        <div className="flex items-center justify-between">
-          <label className="block text-sm font-medium text-slate-700">Notes</label>
-          <span className={`text-xs ${tooShort ? 'text-amber-600' : 'text-slate-400'}`}>
+      {/* Notes textarea */}
+      <div style={{ marginBottom: '1.25rem' }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: '0.375rem',
+          }}
+        >
+          <label className="st-label" htmlFor="cap-notes" style={{ marginBottom: 0 }}>
+            Notes
+          </label>
+          <span
+            style={{
+              fontSize: '0.75rem',
+              color: tooShort ? 'var(--status-warning)' : 'var(--text-muted)',
+              fontWeight: tooShort ? 600 : 400,
+            }}
+          >
             {words} word{words === 1 ? '' : 's'}
             {tooShort ? ` — need ${MIN_WORDS}` : ''}
           </span>
         </div>
         <textarea
+          id="cap-notes"
+          className="st-textarea"
           value={text}
           onChange={(e) => setText(e.target.value)}
           rows={12}
           placeholder="Paste an email, type rough notes, or describe how something works…"
-          className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
         />
       </div>
 
-      <div className="mt-4 flex flex-wrap items-center gap-3">
+      {/* Footer — upload + submit */}
+      <div
+        style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          alignItems: 'center',
+          gap: '0.75rem',
+        }}
+      >
         <button
           type="button"
+          className="btn-secondary"
           onClick={() => fileInput.current?.click()}
           disabled={uploading}
-          className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+          style={{ height: '2.25rem', fontSize: '0.8125rem' }}
         >
-          {uploading ? 'Extracting…' : 'Upload file (.txt, .docx, .pdf)'}
+          {uploading ? 'Extracting…' : 'Upload file'}
         </button>
         <input
           ref={fileInput}
           type="file"
           accept=".txt,.docx,.pdf"
           onChange={onFile}
-          className="hidden"
+          style={{ display: 'none' }}
         />
-        {uploadName && <span className="text-xs text-slate-500">Added: {uploadName}</span>}
 
-        <div className="ml-auto flex items-center gap-3">
-          {error && <span className="text-sm text-red-600">{error}</span>}
-          <button
-            type="submit"
-            disabled={busy || uploading}
-            className="rounded-md bg-brand-600 px-5 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50"
+        {uploadName && (
+          <span
+            style={{
+              fontSize: '0.8125rem',
+              color: 'var(--text-muted)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.375rem',
+            }}
           >
+            <span
+              style={{
+                display: 'inline-block',
+                width: '6px',
+                height: '6px',
+                borderRadius: '50%',
+                background: 'var(--status-success)',
+                flexShrink: 0,
+              }}
+            />
+            {uploadName}
+          </span>
+        )}
+
+        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          {error && (
+            <span style={{ fontSize: '0.8125rem', color: 'var(--status-warning)', fontWeight: 500 }}>
+              {error}
+            </span>
+          )}
+          <button type="submit" className="btn-primary" disabled={busy || uploading}>
             {busy ? 'Structuring…' : 'Capture'}
           </button>
         </div>

@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { supabaseAdmin } from '../lib/supabase';
 import { AuthContext } from '../types';
+import { logger } from '../lib/logger';
 
 // Augment Express Request with our auth context.
 declare global {
@@ -25,17 +26,17 @@ function extractToken(req: Request): string | null {
 export async function requireUser(req: Request, res: Response, next: NextFunction) {
   try {
     const token = extractToken(req);
-    if (!token) return res.status(401).json({ error: 'Missing bearer token' });
+    if (!token) return res.status(401).json({ error: 'Please sign in to continue.' });
 
     const { data, error } = await supabaseAdmin.auth.getUser(token);
     if (error || !data.user) {
-      return res.status(401).json({ error: 'Invalid or expired token' });
+      return res.status(401).json({ error: 'Your session has expired — please sign in again.' });
     }
 
     req.auth = { userId: data.user.id, orgId: '', email: data.user.email ?? null };
     next();
   } catch (err) {
-    console.error('requireUser error:', err);
+    logger.error('requireUser unexpected error', { route: 'auth', errorType: 'AuthMiddlewareError' });
     res.status(500).json({ error: 'Authentication failed' });
   }
 }
@@ -51,12 +52,12 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
     const token = header.startsWith('Bearer ') ? header.slice(7).trim() : null;
 
     if (!token) {
-      return res.status(401).json({ error: 'Missing bearer token' });
+      return res.status(401).json({ error: 'Please sign in to continue.' });
     }
 
     const { data, error } = await supabaseAdmin.auth.getUser(token);
     if (error || !data.user) {
-      return res.status(401).json({ error: 'Invalid or expired token' });
+      return res.status(401).json({ error: 'Your session has expired — please sign in again.' });
     }
 
     const { data: userRow, error: userErr } = await supabaseAdmin
@@ -82,7 +83,7 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
 
     next();
   } catch (err) {
-    console.error('Auth middleware error:', err);
+    logger.error('requireAuth unexpected error', { route: 'auth', errorType: 'AuthMiddlewareError' });
     res.status(500).json({ error: 'Authentication failed' });
   }
 }

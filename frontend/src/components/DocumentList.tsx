@@ -51,6 +51,11 @@ export default function DocumentList({
             <div className="flex items-center gap-2">
               <span className={`h-2 w-2 shrink-0 rounded-full ${FORMAT_DOT[doc.format]}`} />
               <span className="truncate text-sm font-medium text-slate-800">{doc.title}</span>
+              {doc.source === 'template' && (
+                <span className="shrink-0 rounded px-1 py-0.5 text-xs font-medium bg-slate-100 text-slate-500">
+                  Template
+                </span>
+              )}
             </div>
             <div className="mt-0.5 flex items-center justify-between text-xs text-slate-400">
               <span className="capitalize">{doc.format}</span>

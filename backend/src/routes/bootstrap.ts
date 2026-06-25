@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { requireUser } from '../middleware/auth';
 import { supabaseAdmin } from '../lib/supabase';
+import { logger } from '../lib/logger';
 
 const router = Router();
 
@@ -67,7 +68,7 @@ router.post('/bootstrap', requireUser, async (req, res) => {
     .single();
 
   if (orgErr || !org) {
-    console.error('Org create error:', orgErr);
+    logger.error('Org create error', { route: 'POST /api/bootstrap', errorType: 'SupabaseInsertError' });
     return res.status(500).json({ error: 'Failed to create organisation' });
   }
 
@@ -80,7 +81,7 @@ router.post('/bootstrap', requireUser, async (req, res) => {
   });
 
   if (userErr) {
-    console.error('User create error:', userErr);
+    logger.error('User create error', { route: 'POST /api/bootstrap', errorType: 'SupabaseInsertError' });
     return res.status(500).json({ error: 'Failed to create user profile' });
   }
 

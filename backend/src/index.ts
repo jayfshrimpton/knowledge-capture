@@ -1,11 +1,13 @@
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
+import { logger } from './lib/logger';
 
 import bootstrapRoutes from './routes/bootstrap';
 import captureRoutes from './routes/capture';
 import uploadRoutes from './routes/upload';
 import documentRoutes from './routes/documents';
+import templateRoutes from './routes/templates';
 
 const app = express();
 const PORT = Number(process.env.PORT ?? 3001);
@@ -26,10 +28,11 @@ app.use('/api', bootstrapRoutes);
 app.use('/api', captureRoutes);
 app.use('/api', uploadRoutes);
 app.use('/api', documentRoutes);
+app.use('/api', templateRoutes);
 
 // Fallback error handler (e.g. multer file-size errors)
 app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
-  console.error('Unhandled error:', err);
+  logger.error('Unhandled error', { errorType: err?.code ?? 'UnhandledError' });
   if (err?.code === 'LIMIT_FILE_SIZE') {
     return res.status(413).json({ error: 'File is too large (max 15 MB)' });
   }

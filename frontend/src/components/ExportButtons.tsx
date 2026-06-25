@@ -28,22 +28,26 @@ export default function ExportButtons({ documentId, title }: { documentId: strin
   }
 
   return (
-    <div className="flex items-center gap-2">
+    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
       <button
+        className="btn-secondary"
         onClick={() => run('word')}
         disabled={busy !== null}
-        className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+        style={{ height: '2rem', fontSize: '0.8125rem', padding: '0 0.875rem' }}
       >
         {busy === 'word' ? 'Exporting…' : 'Export Word'}
       </button>
       <button
+        className="btn-secondary"
         onClick={() => run('pdf')}
         disabled={busy !== null}
-        className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+        style={{ height: '2rem', fontSize: '0.8125rem', padding: '0 0.875rem' }}
       >
         {busy === 'pdf' ? 'Exporting…' : 'Export PDF'}
       </button>
-      {error && <span className="text-sm text-red-600">{error}</span>}
+      {error && (
+        <span style={{ fontSize: '0.8125rem', color: 'var(--status-warning)' }}>{error}</span>
+      )}
     </div>
   );
 }

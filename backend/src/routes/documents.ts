@@ -3,6 +3,7 @@ import { requireAuth } from '../middleware/auth';
 import { supabaseAdmin } from '../lib/supabase';
 import { exportDocument, ExportFormat } from '../services/exporter';
 import { DocumentRow } from '../types';
+import { logger } from '../lib/logger';
 
 const router = Router();
 
@@ -12,12 +13,12 @@ router.get('/documents', requireAuth, async (req, res) => {
 
   const { data, error } = await supabaseAdmin
     .from('documents')
-    .select('id, title, author_name, format, summary, tags, created_at, updated_at')
+    .select('id, title, author_name, format, summary, tags, source, created_at, updated_at')
     .eq('org_id', orgId)
     .order('created_at', { ascending: false });
 
   if (error) {
-    console.error('List documents failed:', error);
+    logger.error('List documents failed', { route: 'GET /api/documents', errorType: 'SupabaseQueryError' });
     return res.status(500).json({ error: 'Failed to load documents' });
   }
 
@@ -36,7 +37,7 @@ router.get('/documents/:id', requireAuth, async (req, res) => {
     .maybeSingle();
 
   if (error) {
-    console.error('Get document failed:', error);
+    logger.error('Get document failed', { route: 'GET /api/documents/:id', errorType: 'SupabaseQueryError' });
     return res.status(500).json({ error: 'Failed to load document' });
   }
   if (!data) return res.status(404).json({ error: 'Document not found' });
@@ -65,7 +66,7 @@ router.post('/documents/:id/export', requireAuth, async (req, res) => {
     .maybeSingle();
 
   if (error) {
-    console.error('Export lookup failed:', error);
+    logger.error('Export lookup failed', { route: 'POST /api/documents/:id/export', errorType: 'SupabaseQueryError' });
     return res.status(500).json({ error: 'Failed to load document' });
   }
   if (!data) return res.status(404).json({ error: 'Document not found' });
@@ -76,8 +77,8 @@ router.post('/documents/:id/export', requireAuth, async (req, res) => {
     res.setHeader('Content-Disposition', `attachment; filename="${result.filename}"`);
     res.send(result.buffer);
   } catch (err) {
-    console.error('Export generation failed:', err);
-    res.status(500).json({ error: 'Failed to generate export' });
+    logger.error('Export generation failed', { route: 'POST /api/documents/:id/export', errorType: 'ExportError' });
+    res.status(500).json({ error: 'Export failed — please try again or try a different format.' });
   }
 });
 

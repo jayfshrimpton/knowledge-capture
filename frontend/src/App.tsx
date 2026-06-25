@@ -4,11 +4,21 @@ import Login from './pages/Login';
 import Onboarding from './pages/Onboarding';
 import Capture from './pages/Capture';
 import Library from './pages/Library';
+import Templates from './pages/Templates';
+import HomePage from './pages/marketing/HomePage';
+import HowItWorksPage from './pages/marketing/HowItWorksPage';
+import PricingPage from './pages/marketing/PricingPage';
+import UseCasesPage from './pages/marketing/UseCasesPage';
+import SecurityPage from './pages/marketing/SecurityPage';
+import RequestDemoPage from './pages/marketing/RequestDemoPage';
 
 function Spinner() {
   return (
-    <div className="flex h-screen items-center justify-center text-slate-500">
-      <div className="h-6 w-6 animate-spin rounded-full border-2 border-slate-300 border-t-brand-600" />
+    <div className="flex h-screen items-center justify-center">
+      <div
+        className="h-6 w-6 animate-spin rounded-full border-2"
+        style={{ borderColor: 'var(--border-default)', borderTopColor: 'var(--accent)' }}
+      />
     </div>
   );
 }
@@ -17,30 +27,105 @@ function Header() {
   const { me, signOut } = useAuth();
   const { pathname } = useLocation();
 
-  const linkClass = (active: boolean) =>
-    `px-3 py-1.5 rounded-md text-sm font-medium ${
-      active ? 'bg-brand-50 text-brand-700' : 'text-slate-600 hover:text-slate-900'
-    }`;
+  const navLink = (to: string, label: string, active: boolean) => (
+    <Link
+      to={to}
+      style={{
+        fontSize: '0.875rem',
+        fontWeight: active ? 600 : 400,
+        color: active ? 'var(--accent)' : 'var(--text-secondary)',
+        textDecoration: 'none',
+        padding: '0.25rem 0',
+        borderBottom: active ? '2px solid var(--accent)' : '2px solid transparent',
+        transition: `color var(--duration-fast) var(--ease-standard),
+                     border-color var(--duration-fast) var(--ease-standard)`,
+      }}
+      onMouseEnter={e => { if (!active) (e.currentTarget as HTMLElement).style.color = 'var(--text-primary)'; }}
+      onMouseLeave={e => { if (!active) (e.currentTarget as HTMLElement).style.color = 'var(--text-secondary)'; }}
+    >
+      {label}
+    </Link>
+  );
 
   return (
-    <header className="border-b border-slate-200 bg-white">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
-        <div className="flex items-center gap-6">
-          <Link to="/" className="text-lg font-semibold text-slate-900">
-            Knowledge Capture
+    <header
+      style={{
+        position: 'sticky',
+        top: 0,
+        zIndex: 50,
+        background: 'rgba(255,255,255,0.88)',
+        backdropFilter: 'blur(14px)',
+        WebkitBackdropFilter: 'blur(14px)',
+        borderBottom: '1px solid var(--border-subtle)',
+      }}
+    >
+      <div
+        style={{
+          maxWidth: '80rem',
+          margin: '0 auto',
+          padding: '0 1.5rem',
+          height: '3.5rem',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '2rem',
+        }}
+      >
+        {/* Logo + nav */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '2.5rem' }}>
+          <Link
+            to="/"
+            style={{
+              fontFamily: '"Raleway", sans-serif',
+              fontWeight: 600,
+              fontSize: '1.125rem',
+              color: 'var(--text-primary)',
+              textDecoration: 'none',
+              letterSpacing: '-0.01em',
+              flexShrink: 0,
+            }}
+          >
+            Structa
           </Link>
-          <nav className="flex items-center gap-1">
-            <Link to="/" className={linkClass(pathname === '/')}>
-              Capture
-            </Link>
-            <Link to="/library" className={linkClass(pathname.startsWith('/library'))}>
-              Library
-            </Link>
+
+          <nav style={{ display: 'flex', alignItems: 'center', gap: '1.75rem' }}>
+            {navLink('/', 'Capture', pathname === '/')}
+            {navLink('/library', 'Library', pathname.startsWith('/library'))}
+            {navLink('/templates', 'Templates', pathname.startsWith('/templates'))}
           </nav>
         </div>
-        <div className="flex items-center gap-3 text-sm text-slate-500">
-          <span className="hidden sm:inline">{me?.user?.orgName}</span>
-          <button onClick={() => signOut()} className="text-slate-600 hover:text-slate-900">
+
+        {/* Right side — org + sign out */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          {me?.user?.orgName && (
+            <span
+              style={{
+                fontSize: '0.8125rem',
+                color: 'var(--text-muted)',
+                maxWidth: '12rem',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {me.user.orgName}
+            </span>
+          )}
+          <button
+            onClick={() => signOut()}
+            style={{
+              fontSize: '0.8125rem',
+              fontWeight: 600,
+              color: 'var(--text-secondary)',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              padding: '0.25rem 0',
+              transition: `color var(--duration-fast) var(--ease-standard)`,
+            }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'var(--text-primary)'; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'var(--text-secondary)'; }}
+          >
             Sign out
           </button>
         </div>
@@ -57,7 +142,14 @@ export default function App() {
   if (!session) {
     return (
       <Routes>
-        <Route path="*" element={<Login />} />
+        <Route path="/" element={<HomePage />} />
+        <Route path="/how-it-works" element={<HowItWorksPage />} />
+        <Route path="/use-cases" element={<UseCasesPage />} />
+        <Route path="/pricing" element={<PricingPage />} />
+        <Route path="/security" element={<SecurityPage />} />
+        <Route path="/demo" element={<RequestDemoPage />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     );
   }
@@ -67,13 +159,20 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen">
+    <div style={{ minHeight: '100%' }}>
       <Header />
-      <main className="mx-auto max-w-6xl px-4 py-6">
+      <main
+        style={{
+          maxWidth: '80rem',
+          margin: '0 auto',
+          padding: '2rem 1.5rem',
+        }}
+      >
         <Routes>
           <Route path="/" element={<Capture />} />
           <Route path="/library" element={<Library />} />
           <Route path="/library/:id" element={<Library />} />
+          <Route path="/templates" element={<Templates />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>

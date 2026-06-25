@@ -3,6 +3,7 @@ import multer from 'multer';
 import { requireAuth } from '../middleware/auth';
 import { extractText, FileParseError } from '../services/fileParser';
 import { supabaseAdmin, STORAGE_BUCKET } from '../lib/supabase';
+import { logger } from '../lib/logger';
 
 const router = Router();
 
@@ -42,8 +43,8 @@ router.post('/upload', requireAuth, upload.single('file'), async (req, res) => {
     if (err instanceof FileParseError) {
       return res.status(422).json({ error: err.message });
     }
-    console.error('Unexpected upload parse error:', err);
-    return res.status(500).json({ error: 'Failed to process the uploaded file' });
+    logger.error('Unexpected file parse error', { route: 'POST /api/upload', errorType: 'FileParseError' });
+    return res.status(500).json({ error: "We couldn't read this file. It may be corrupted or in an unsupported format." });
   }
 
   if (!rawText) {
@@ -59,9 +60,9 @@ router.post('/upload', requireAuth, upload.single('file'), async (req, res) => {
       .from(STORAGE_BUCKET)
       .upload(path, file.buffer, { contentType: file.mimetype, upsert: false });
     if (!error) filePath = path;
-    else console.warn('Source file storage upload failed:', error.message);
+    else logger.warn('Source file storage upload failed', { route: 'POST /api/upload', errorType: 'StorageUploadError' });
   } catch (err) {
-    console.warn('Source file storage upload threw:', err);
+    logger.warn('Source file storage upload threw', { route: 'POST /api/upload', errorType: 'StorageUploadError' });
   }
 
   res.json({ rawText, filePath });

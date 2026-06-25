@@ -24,50 +24,97 @@ export default function Onboarding() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4">
-      <div className="w-full max-w-sm rounded-xl border border-slate-200 bg-white p-8 shadow-sm">
-        <h1 className="text-xl font-semibold text-slate-900">Set up your organisation</h1>
-        <p className="mt-1 text-sm text-slate-500">
-          Signed in as {me?.email}. Create your organisation to get started.
-        </p>
+    <div
+      style={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'var(--surface-subtle)',
+        padding: '1.5rem',
+      }}
+    >
+      <div
+        style={{
+          width: '100%',
+          maxWidth: '24rem',
+          background: 'var(--surface-card)',
+          border: '1px solid var(--border-default)',
+          borderRadius: 'var(--radius-card)',
+          padding: '2.5rem',
+          boxShadow: 'var(--shadow-md)',
+        }}
+      >
+        <div style={{ marginBottom: '2rem' }}>
+          <h1
+            style={{
+              fontFamily: '"Raleway", sans-serif',
+              fontWeight: 600,
+              fontSize: '1.5rem',
+              color: 'var(--text-primary)',
+              letterSpacing: '-0.01em',
+            }}
+          >
+            Set up your organisation
+          </h1>
+          <p style={{ marginTop: '0.375rem', fontSize: '0.9375rem', color: 'var(--text-muted)' }}>
+            Signed in as {me?.email}. Create your organisation to get started.
+          </p>
+        </div>
 
-        <form onSubmit={submit} className="mt-6 space-y-4">
+        <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <div>
-            <label className="block text-sm font-medium text-slate-700">Organisation name</label>
+            <label className="st-label" htmlFor="org-name">Organisation name</label>
             <input
+              id="org-name"
               required
+              className="st-input"
               value={orgName}
               onChange={(e) => setOrgName(e.target.value)}
               placeholder="e.g. Kempe Engineering"
-              className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700">Your name (optional)</label>
+            <label className="st-label" htmlFor="user-name">Your name (optional)</label>
             <input
+              id="user-name"
+              className="st-input"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
+              placeholder="Your full name"
             />
           </div>
 
-          {error && <p className="text-sm text-red-600">{error}</p>}
+          {error && (
+            <p style={{ fontSize: '0.875rem', color: 'var(--status-warning)', fontWeight: 500 }}>
+              {error}
+            </p>
+          )}
 
           <button
             type="submit"
+            className="btn-primary"
             disabled={busy}
-            className="w-full rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50"
+            style={{ width: '100%', marginTop: '0.25rem' }}
           >
             {busy ? 'Setting up…' : 'Create organisation'}
           </button>
         </form>
 
-        <button
-          onClick={() => signOut()}
-          className="mt-4 w-full text-center text-sm text-slate-500 hover:text-slate-700"
-        >
-          Sign out
-        </button>
+        <div style={{ marginTop: '1.25rem', textAlign: 'center' }}>
+          <button
+            onClick={() => signOut()}
+            style={{
+              fontSize: '0.875rem',
+              color: 'var(--text-muted)',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+            }}
+          >
+            Sign out
+          </button>
+        </div>
       </div>
     </div>
   );

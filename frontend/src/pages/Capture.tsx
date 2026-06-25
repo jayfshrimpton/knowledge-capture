@@ -13,10 +13,20 @@ export default function Capture() {
   }
 
   return (
-    <div className="space-y-6">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
       <div>
-        <h1 className="text-2xl font-semibold text-slate-900">Capture knowledge</h1>
-        <p className="mt-1 text-sm text-slate-500">
+        <h1
+          style={{
+            fontFamily: '"Raleway", sans-serif',
+            fontWeight: 500,
+            fontSize: '1.75rem',
+            color: 'var(--text-primary)',
+            letterSpacing: '-0.01em',
+          }}
+        >
+          Capture knowledge
+        </h1>
+        <p style={{ marginTop: '0.375rem', fontSize: '0.9375rem', color: 'var(--text-muted)' }}>
           Paste rough notes, an email, or upload a file. The AI structures it into a usable document.
         </p>
       </div>
@@ -27,23 +37,44 @@ export default function Capture() {
 
       {sessionDocs.length > 1 && (
         <div>
-          <h3 className="mb-2 text-sm font-semibold text-slate-600">Captured this session</h3>
-          <ul className="flex flex-wrap gap-2">
-            {sessionDocs.map((d) => (
-              <li key={d.id}>
+          <p
+            style={{
+              fontSize: '0.8125rem',
+              fontWeight: 600,
+              color: 'var(--text-muted)',
+              marginBottom: '0.625rem',
+              textTransform: 'uppercase',
+              letterSpacing: '0.04em',
+            }}
+          >
+            Captured this session
+          </p>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+            {sessionDocs.map((d) => {
+              const active = current?.id === d.id;
+              return (
                 <button
+                  key={d.id}
                   onClick={() => setCurrent(d)}
-                  className={`rounded-full border px-3 py-1 text-sm ${
-                    current?.id === d.id
-                      ? 'border-brand-300 bg-brand-50 text-brand-700'
-                      : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
-                  }`}
+                  style={{
+                    padding: '0.3125rem 0.875rem',
+                    borderRadius: '9999px',
+                    border: `1px solid ${active ? 'var(--accent)' : 'var(--border-default)'}`,
+                    background: active ? 'var(--accent-subtle)' : 'var(--surface-card)',
+                    color: active ? 'var(--accent)' : 'var(--text-secondary)',
+                    fontSize: '0.8125rem',
+                    fontWeight: active ? 600 : 400,
+                    cursor: 'pointer',
+                    transition: `background var(--duration-fast) var(--ease-standard),
+                                 border-color var(--duration-fast) var(--ease-standard),
+                                 color var(--duration-fast) var(--ease-standard)`,
+                  }}
                 >
                   {d.title}
                 </button>
-              </li>
-            ))}
-          </ul>
+              );
+            })}
+          </div>
         </div>
       )}
     </div>
