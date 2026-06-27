@@ -136,7 +136,19 @@ export default function Library() {
       <section>
         {error && <p className="text-sm text-red-600">{error}</p>}
         {loadingDoc && <p className="text-sm text-slate-400">Loading document…</p>}
-        {!loadingDoc && selected && <DocumentOutput doc={selected} />}
+        {!loadingDoc && selected && (
+          <DocumentOutput
+            doc={selected}
+            onDocumentUpdated={(updated) => {
+              setSelected(updated);
+              setItems((prev) =>
+                prev.map((item) =>
+                  item.id === updated.id ? { ...item, updated_at: updated.updated_at } : item,
+                ),
+              );
+            }}
+          />
+        )}
         {!loadingDoc && !selected && !error && (
           <div className="flex h-64 items-center justify-center rounded-xl border border-dashed border-slate-300 text-sm text-slate-400">
             Select a document to view it.

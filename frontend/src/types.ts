@@ -46,6 +46,21 @@ export interface DocumentRow {
   updated_at: string;
 }
 
+/** A version entry returned by GET /api/documents/:id/versions. */
+export interface DocumentVersionListItem {
+  id: string;
+  version_number: number;
+  created_at: string;
+  created_by: string | null;
+}
+
+/** Full version detail returned by GET /api/documents/:id/versions/:versionNumber. */
+export interface DocumentVersionDetail extends DocumentVersionListItem {
+  document_id: string;
+  content: DocumentSection[];
+  structured_content: string | null;
+}
+
 /** Trimmed row returned by GET /api/documents. */
 export interface DocumentListItem {
   id: string;

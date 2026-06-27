@@ -64,6 +64,25 @@ export interface DocumentRow {
   updated_at: string;
 }
 
+/** A row from document_versions (full). */
+export interface DocumentVersionRow {
+  id: string;
+  document_id: string;
+  version_number: number;
+  content: DocumentSection[];
+  structured_content: string | null;
+  created_at: string;
+  created_by: string | null;
+}
+
+/** Trimmed version row for list responses. */
+export interface DocumentVersionListItem {
+  id: string;
+  version_number: number;
+  created_at: string;
+  created_by: string | null;
+}
+
 /** Authenticated request context attached by the auth middleware. */
 export interface AuthContext {
   userId: string;

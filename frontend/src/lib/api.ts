@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import { DocumentRow, DocumentListItem } from '../types';
+import { DocumentRow, DocumentListItem, DocumentVersionListItem, DocumentVersionDetail } from '../types';
 
 const API_URL = (import.meta.env.VITE_API_URL as string) ?? 'http://localhost:3001';
 
@@ -60,6 +60,7 @@ export interface CapturePayload {
   author?: string;
   rawText: string;
   sourceFilePath?: string | null;
+  documentId?: string;
 }
 
 export async function capture(payload: CapturePayload): Promise<DocumentRow> {
@@ -103,6 +104,32 @@ export async function exportDocument(id: string, format: 'word' | 'pdf'): Promis
     throw new Error(body?.error ?? 'Export failed');
   }
   return res.blob();
+}
+
+// ---------------------------------------------------------------------------
+// Document versions
+// ---------------------------------------------------------------------------
+
+export async function listDocumentVersions(id: string): Promise<DocumentVersionListItem[]> {
+  const res = await fetch(`${API_URL}/api/documents/${id}/versions`, {
+    headers: await authHeader(),
+  });
+  return handle<DocumentVersionListItem[]>(res);
+}
+
+export async function getDocumentVersion(id: string, versionNumber: number): Promise<DocumentVersionDetail> {
+  const res = await fetch(`${API_URL}/api/documents/${id}/versions/${versionNumber}`, {
+    headers: await authHeader(),
+  });
+  return handle<DocumentVersionDetail>(res);
+}
+
+export async function restoreDocumentVersion(id: string, versionNumber: number): Promise<DocumentRow> {
+  const res = await fetch(`${API_URL}/api/documents/${id}/versions/${versionNumber}/restore`, {
+    method: 'POST',
+    headers: await authHeader(),
+  });
+  return handle<DocumentRow>(res);
 }
 
 // ---------------------------------------------------------------------------
