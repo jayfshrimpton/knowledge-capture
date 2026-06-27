@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import DocumentList from '../components/DocumentList';
 import DocumentOutput from '../components/DocumentOutput';
 import { listDocuments, getDocument } from '../lib/api';
@@ -33,6 +33,90 @@ export default function Library() {
       .catch((err) => setError(err instanceof Error ? err.message : 'Failed to load document'))
       .finally(() => setLoadingDoc(false));
   }, [id]);
+
+  const isOnboarded = localStorage.getItem('lore_onboarded') !== null;
+
+  if (!loadingList && items.length === 0 && !isOnboarded) {
+    return (
+      <div style={{ maxWidth: '36rem', margin: '4rem auto', textAlign: 'center', padding: '0 1rem' }}>
+        <h1
+          style={{
+            fontFamily: '"Raleway", sans-serif',
+            fontWeight: 600,
+            fontSize: '2rem',
+            color: 'var(--text-primary)',
+            letterSpacing: '-0.01em',
+            marginBottom: '0.75rem',
+          }}
+        >
+          Welcome to Lore
+        </h1>
+        <p
+          style={{
+            fontSize: '1.0625rem',
+            color: 'var(--text-secondary)',
+            lineHeight: 1.6,
+            marginBottom: '2.5rem',
+          }}
+        >
+          Turn what your team knows into documentation that lasts.
+        </p>
+        <div style={{ marginBottom: '0.5rem' }}>
+          {[
+            'Paste your notes or upload a file',
+            'Lore structures it automatically',
+            'Export or save to your library',
+          ].map((step, i) => (
+            <div
+              key={i}
+              style={{
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: '0.875rem',
+                marginBottom: '0.875rem',
+                textAlign: 'left',
+              }}
+            >
+              <span
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                  width: '1.75rem',
+                  height: '1.75rem',
+                  borderRadius: '50%',
+                  background: 'var(--accent-subtle)',
+                  color: 'var(--accent)',
+                  fontSize: '0.8125rem',
+                  fontWeight: 700,
+                }}
+              >
+                {i + 1}
+              </span>
+              <span
+                style={{
+                  fontSize: '0.9375rem',
+                  color: 'var(--text-secondary)',
+                  lineHeight: 1.5,
+                  paddingTop: '0.2rem',
+                }}
+              >
+                {step}
+              </span>
+            </div>
+          ))}
+        </div>
+        <Link
+          to="/"
+          className="btn-primary"
+          style={{ display: 'inline-block', marginTop: '1.75rem', textDecoration: 'none' }}
+        >
+          Make your first capture →
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="grid grid-cols-1 gap-6 md:grid-cols-[300px_1fr]">

@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { requireAuth } from '../middleware/auth';
 import { structureNotes } from '../services/gemini';
+import { estimateCreditCost, finalCreditCost, hasCredits, deductCredits } from '../services/credits';
 import { supabaseAdmin } from '../lib/supabase';
 import { logger } from '../lib/logger';
 
@@ -32,6 +33,21 @@ router.post('/capture', requireAuth, async (req, res) => {
     return res
       .status(400)
       .json({ error: `Input is too short. Please provide at least ${MIN_WORDS} words.` });
+  }
+
+  // Check credits before calling Gemini.
+  const estimatedCost = estimateCreditCost(rawText);
+  try {
+    const allowed = await hasCredits(orgId, estimatedCost);
+    if (!allowed) {
+      return res.status(402).json({
+        error: 'Your organisation has reached its monthly AI credit limit. Please upgrade your plan to continue.',
+        code: 'CREDITS_EXHAUSTED',
+      });
+    }
+  } catch (creditErr) {
+    logger.error('Credit check failed', { route: 'POST /api/capture', errorType: 'CreditCheckError' });
+    return res.status(500).json({ error: 'Failed to check AI credit balance' });
   }
 
   let structured;
@@ -104,6 +120,18 @@ router.post('/capture', requireAuth, async (req, res) => {
   if (error) {
     logger.error('Document insert failed', { route: 'POST /api/capture', errorType: 'SupabaseInsertError' });
     return res.status(500).json({ error: 'Failed to save document' });
+  }
+
+  // Deduct credits based on the actual output format (diagram costs more).
+  const actualCost = finalCreditCost(structured.format, rawText);
+  try {
+    await deductCredits(orgId, userId, actualCost, data.id);
+  } catch (creditErr) {
+    // Non-fatal: document is already saved. Log and continue.
+    logger.error('Credit deduction failed after successful capture', {
+      route: 'POST /api/capture',
+      errorType: 'CreditDeductionError',
+    });
   }
 
   res.status(201).json(data);

@@ -8,6 +8,7 @@ import captureRoutes from './routes/capture';
 import uploadRoutes from './routes/upload';
 import documentRoutes from './routes/documents';
 import templateRoutes from './routes/templates';
+import creditsRoutes from './routes/credits';
 
 const app = express();
 const PORT = Number(process.env.PORT ?? 3001);
@@ -29,6 +30,7 @@ app.use('/api', captureRoutes);
 app.use('/api', uploadRoutes);
 app.use('/api', documentRoutes);
 app.use('/api', templateRoutes);
+app.use('/api', creditsRoutes);
 
 // Fallback error handler (e.g. multer file-size errors)
 app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {

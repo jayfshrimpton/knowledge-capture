@@ -9,11 +9,19 @@ function countWords(text: string): number {
   return text.trim().split(/\s+/).filter(Boolean).length;
 }
 
-export default function CaptureForm({ onCreated }: { onCreated: (doc: DocumentRow) => void }) {
+export default function CaptureForm({
+  onCreated,
+  defaultTitle,
+  defaultNotes,
+}: {
+  onCreated: (doc: DocumentRow) => void;
+  defaultTitle?: string;
+  defaultNotes?: string;
+}) {
   const { me } = useAuth();
-  const [title, setTitle] = useState('');
+  const [title, setTitle] = useState(defaultTitle ?? '');
   const [author, setAuthor] = useState(me?.user?.name ?? '');
-  const [text, setText] = useState('');
+  const [text, setText] = useState(defaultNotes ?? '');
   const [sourceFilePath, setSourceFilePath] = useState<string | null>(null);
   const [uploadName, setUploadName] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
