@@ -285,7 +285,7 @@ function PlanCard({ status, onManage, managing }: PlanCardProps) {
 // ---------------------------------------------------------------------------
 
 export default function Billing() {
-  const { me } = useAuth();
+  useAuth();
   const [searchParams] = useSearchParams();
   const [status, setStatus] = useState<BillingStatus | null>(null);
   const [loading, setLoading] = useState(true);
@@ -330,7 +330,6 @@ export default function Billing() {
     }
   };
 
-  const isPaid = status && status.plan !== 'trial' && status.plan !== 'starter' || (status?.plan === 'starter' && status?.billing_status === 'active');
   const showPricing = !status || status.plan === 'trial' || status.billing_status === 'cancelled';
 
   return (
