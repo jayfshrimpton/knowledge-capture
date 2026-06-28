@@ -1,13 +1,10 @@
-import { supabase } from './supabase';
+import { authHeader } from './session';
 import { DocumentRow, DocumentListItem, DocumentVersionListItem, DocumentVersionDetail } from '../types';
 
 const API_URL = (import.meta.env.VITE_API_URL as string) ?? 'http://localhost:3001';
 
-async function authHeader(): Promise<Record<string, string>> {
-  const { data } = await supabase.auth.getSession();
-  const token = data.session?.access_token;
-  return token ? { Authorization: `Bearer ${token}` } : {};
-}
+// authHeader resolves the active provider (Entra or Supabase) and attaches its
+// access token — see lib/session.ts.
 
 async function handle<T>(res: Response): Promise<T> {
   if (!res.ok) {
@@ -179,4 +176,36 @@ export async function createFromTemplate(
     body: JSON.stringify(payload),
   });
   return handle<DocumentRow>(res);
+}
+
+// ---------------------------------------------------------------------------
+// Billing
+// ---------------------------------------------------------------------------
+
+export type BillingPlan = 'starter' | 'business';
+
+export interface BillingStatus {
+  plan: string;
+  seats: number;
+  billing_status: 'active' | 'past_due' | 'cancelled' | 'trialing';
+  billing_period_end: string | null;
+}
+
+export async function getBillingStatus(): Promise<BillingStatus> {
+  const res = await fetch(`${API_URL}/api/billing/status`, { headers: await authHeader() });
+  return handle<BillingStatus>(res);
+}
+
+export async function createCheckoutSession(plan: BillingPlan, seats?: number): Promise<{ checkoutUrl: string }> {
+  const res = await fetch(`${API_URL}/api/billing/checkout`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...(await authHeader()) },
+    body: JSON.stringify({ plan, seats }),
+  });
+  return handle<{ checkoutUrl: string }>(res);
+}
+
+export async function getBillingPortalUrl(): Promise<{ portalUrl: string }> {
+  const res = await fetch(`${API_URL}/api/billing/portal`, { headers: await authHeader() });
+  return handle<{ portalUrl: string }>(res);
 }

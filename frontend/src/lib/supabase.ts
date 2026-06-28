@@ -10,4 +10,13 @@ if (!url || !publishableKey) {
   );
 }
 
-export const supabase = createClient(url, publishableKey);
+// persistSession + autoRefreshToken keep the email/password session alive in
+// localStorage. detectSessionInUrl lets supabase-js consume the tokens in
+// email-confirmation and password-reset links when the user lands back here.
+export const supabase = createClient(url, publishableKey, {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: true,
+  },
+});
