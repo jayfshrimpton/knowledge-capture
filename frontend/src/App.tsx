@@ -5,6 +5,8 @@ import Onboarding from './pages/Onboarding';
 import Capture from './pages/Capture';
 import Library from './pages/Library';
 import Templates from './pages/Templates';
+import Billing from './pages/Billing';
+import ResetPassword from './pages/ResetPassword';
 import HomePage from './pages/marketing/HomePage';
 import HowItWorksPage from './pages/marketing/HowItWorksPage';
 import PricingPage from './pages/marketing/PricingPage';
@@ -92,6 +94,7 @@ function Header() {
             {navLink('/', 'Capture', pathname === '/')}
             {navLink('/library', 'Library', pathname.startsWith('/library'))}
             {navLink('/templates', 'Templates', pathname.startsWith('/templates'))}
+            {me?.user?.role === 'admin' && navLink('/billing', 'Billing', pathname.startsWith('/billing'))}
           </nav>
         </div>
 
@@ -135,11 +138,19 @@ function Header() {
 }
 
 export default function App() {
-  const { session, me, loading } = useAuth();
+  const { isAuthenticated, me, loading } = useAuth();
+  const { pathname } = useLocation();
+
+  // The Supabase password-reset link signs the user in with a temporary
+  // recovery session, so it must be reachable regardless of auth/onboarding
+  // state — render it before any of the gating below.
+  if (pathname === '/auth/reset') {
+    return <ResetPassword />;
+  }
 
   if (loading) return <Spinner />;
 
-  if (!session) {
+  if (!isAuthenticated) {
     return (
       <Routes>
         <Route path="/" element={<HomePage />} />
@@ -173,6 +184,7 @@ export default function App() {
           <Route path="/library" element={<Library />} />
           <Route path="/library/:id" element={<Library />} />
           <Route path="/templates" element={<Templates />} />
+          <Route path="/billing" element={<Billing />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>

@@ -42,7 +42,7 @@ router.get('/me', requireUser, async (req, res) => {
  * Body: { orgName: string, name?: string }
  */
 router.post('/bootstrap', requireUser, async (req, res) => {
-  const { userId, email } = req.auth!;
+  const { userId, email, provider, emailVerified } = req.auth!;
   const orgName = (req.body?.orgName ?? '').trim();
   const name = (req.body?.name ?? '').trim() || null;
 
@@ -55,6 +55,15 @@ router.post('/bootstrap', requireUser, async (req, res) => {
 
   if (existing?.org_id) {
     return res.json({ orgId: existing.org_id, alreadyOnboarded: true });
+  }
+
+  // Don't onboard an unconfirmed email (Supabase). Entra accounts are always
+  // verified, so this only ever blocks unverified Supabase sign-ups.
+  if (!emailVerified) {
+    return res.status(403).json({
+      error: 'Please confirm your email address before continuing.',
+      code: 'EMAIL_NOT_VERIFIED',
+    });
   }
 
   if (!orgName) {
@@ -78,6 +87,7 @@ router.post('/bootstrap', requireUser, async (req, res) => {
     name,
     email,
     role: 'admin', // first user in an org is the admin
+    auth_provider: provider,
   });
 
   if (userErr) {
