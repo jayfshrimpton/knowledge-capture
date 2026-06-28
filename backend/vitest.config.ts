@@ -7,5 +7,6 @@ export default defineConfig({
     // test module (and therefore the middleware) is loaded.
     setupFiles: ['./src/test/setup.ts'],
     include: ['src/**/*.test.ts'],
+    exclude: ['src/**/*.integration.test.ts'],
   },
 });
