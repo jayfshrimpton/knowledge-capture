@@ -1,4 +1,4 @@
-# Commonplace — MVP
+# Commonplace
 
 Pulls knowledge out of people's heads and structures it. Captures rough notes,
 brain dumps, and unstructured text and converts them into structured
@@ -12,23 +12,25 @@ using the Google Gemini API. Integrates with wherever the team already works
 knowledge-capture/
 ├── frontend/   React + Vite + Tailwind SPA
 ├── backend/    Node.js + Express + TypeScript API
-└── supabase/   Postgres schema + migrations (database + storage only)
+└── supabase/   Postgres schema + migrations
 ```
 
-- **Authentication:** Microsoft Entra External ID (MSAL) — enterprise M365 sign-in
-- **Database + file storage:** Supabase (Postgres + Storage; Supabase Auth is NOT used)
+- **Authentication:** Dual-provider — Microsoft Entra External ID (MSAL) for M365
+  work/school accounts, **or** Supabase email/password for everyone else. Each user
+  signs up through one provider and stays with it; JWTs from both are validated by
+  the same backend middleware.
+- **Database + file storage:** Supabase (Postgres + Storage)
 - **AI structuring:** Google Gemini (`gemini-2.5-flash-lite`)
 - **File parsing:** `mammoth` (.docx), `pdf-parse` (.pdf), plain read (.txt)
 - **Exports:** `docx` (Word), `pdfkit` (PDF)
 
-> Note: PDF export uses `pdfkit` (pure JS, no headless Chromium) rather than the
-> puppeteer/@react-pdf options in the original spec — simpler and more reliable
-> for an MVP backend.
+> Note: PDF export uses `pdfkit` (pure JS, no headless Chromium) rather than
+> puppeteer/@react-pdf — simpler with no headless-browser dependency.
 
 ## Prerequisites
 
 - Node.js 18+
-- A Supabase project (for the database and file storage)
+- A Supabase project (database, file storage, and email/password auth)
 - A Microsoft Entra External ID tenant with an app registration
 - A Google Gemini API key (https://aistudio.google.com/apikey)
 
@@ -47,13 +49,19 @@ knowledge-capture/
 ## 2. Supabase setup
 
 1. Create a project at https://supabase.com.
-2. In the SQL editor, run the migrations in order:
-   - [`supabase/migrations/001_initial_schema.sql`](supabase/migrations/001_initial_schema.sql) — tables, storage bucket
-   - [`supabase/migrations/007_entra_auth.sql`](supabase/migrations/007_entra_auth.sql) — drops the `auth.users` FK and Supabase-Auth-based RLS policies (no longer needed)
-   - Run the remaining numbered migrations in order for any other features.
-3. From **Project Settings → API Keys**, copy the Project URL and the
-   **secret** key (`sb_secret_...`). The publishable key is no longer used for
-   auth but may still be needed if you use Supabase Storage from the frontend.
+2. **Enable email auth:** Dashboard → **Authentication → Providers → Email** — ensure
+   it is enabled.
+3. **Use asymmetric JWT signing:** Dashboard → **Project Settings → Auth → JWT** —
+   set the signing algorithm to **RS256** (the backend validates Supabase tokens via
+   the JWKS endpoint, which requires asymmetric keys).
+4. Run all migrations in order (`001` → `011`) using the SQL editor or Supabase CLI.
+   Key ones: `001` (schema + storage), `007` (removes legacy Supabase-Auth-only RLS),
+   `008` (adds `auth_provider` column for dual-auth), `009` (pgvector/embeddings for
+   RAG search), `010` (RBAC).
+5. From **Project Settings → API Keys** copy:
+   - **Project URL** — used by both backend and frontend
+   - **Secret key** (`sb_secret_...`) — backend only, never ship to browser
+   - **Publishable key** — frontend Supabase client (auth + storage)
 
 ## 3. Backend
 
@@ -94,20 +102,24 @@ npm run dev               # http://localhost:5173
 | `VITE_AZURE_TENANT_ID` | Azure Portal → App registrations → your app → Overview → Directory (tenant) ID |
 | `VITE_AZURE_CLIENT_ID` | Azure Portal → App registrations → your app → Overview → Application (client) ID |
 | `VITE_API_URL` | Backend base URL, e.g. `http://localhost:3001` |
-| `VITE_SUPABASE_URL` | Supabase → Project Settings → API Keys → Project URL (needed for Storage) |
-| `VITE_SUPABASE_PUBLISHABLE_KEY` | Supabase → API Keys → publishable key (needed for Storage) |
+| `VITE_SUPABASE_URL` | Supabase → Project Settings → API Keys → Project URL (auth + storage) |
+| `VITE_SUPABASE_PUBLISHABLE_KEY` | Supabase → API Keys → publishable key (auth + storage) |
 
 ## 5. First run
 
-1. Open http://localhost:5173 and click **Sign in with Microsoft**.
-2. You will be redirected to Microsoft's login page — sign in with your M365
-   work or school account and return to the app automatically.
-3. You'll be prompted to create your **organisation** (first user becomes admin).
-4. On the **Capture** page, paste notes or upload a `.txt`/`.docx`/`.pdf`, add a
-   title, and click **Capture**.
-5. The structured output appears with a format badge, a **Gaps & warnings** tab,
+1. Open http://localhost:5173 and choose your sign-in method:
+   - **Sign in with Microsoft** — M365 work/school account (Entra).
+   - **Sign up / Sign in with email** — email + password (Supabase Auth).
+2. On first sign-in you'll be prompted to create your **organisation** (first user
+   becomes admin).
+3. On the **Capture** page, paste notes, upload a `.txt`/`.docx`/`.pdf`, or use
+   **Record** to transcribe audio via Gemini.
+4. The structured output appears with a format badge, a **Gaps & warnings** tab,
    and a **Tags** tab. Export to Word or PDF.
-6. All captures are saved and listed under **Library**, scoped to your org.
+5. All captures are saved under **Library**, scoped to your org. Use **Search** for
+   semantic/RAG queries or Ask-a-question.
+6. **Gap Dashboard** surfaces knowledge gaps across the org. Departments and
+   visibility are managed under **Settings** (RBAC).
 
 ## API endpoints
 
@@ -118,14 +130,18 @@ npm run dev               # http://localhost:5173
 | `POST` | `/api/bootstrap` | Create org + user row for a new signup |
 | `POST` | `/api/capture` | Structure notes via Gemini, persist, return the document |
 | `POST` | `/api/upload` | Extract text from an uploaded file |
+| `POST` | `/api/transcribe` | Transcribe audio via Gemini |
 | `GET` | `/api/documents` | List the org's documents |
 | `GET` | `/api/documents/:id` | Fetch one document |
 | `POST` | `/api/documents/:id/export` | Generate a Word or PDF export |
+| `POST` | `/api/search` | Semantic search (pgvector) |
+| `POST` | `/api/ask` | Ask-a-question (RAG) |
+| `GET` | `/api/gaps/*` | Gap dashboard (admin only) |
 
 All `/api/*` routes except `/api/me` and `/api/bootstrap` require an onboarded
-user. Every route validates the Microsoft Entra External ID JWT (signed by
-Microsoft's JWKS endpoint) in the `Authorization: Bearer` header and scopes
-data to the caller's `org_id`.
+user. Every route validates the `Authorization: Bearer` token against the issuing
+provider's JWKS endpoint — either Microsoft Entra or Supabase — and scopes data
+to the caller's `org_id`.
 
 ## Deployment
 
@@ -135,7 +151,18 @@ data to the caller's `org_id`.
   build`, start `npm start`. Add all backend env vars and set `CORS_ORIGINS` to
   the deployed frontend origin.
 
+## What's built
+
+- Dual-provider auth (Entra + Supabase email/password)
+- Document capture with Gemini AI structuring (`gemini-2.5-flash-lite`)
+- Voice/audio input (Gemini transcription)
+- Semantic search + RAG with Ask-a-question (pgvector)
+- Document versioning; Word and PDF export
+- RBAC — departments, visibility levels, guest access
+- Knowledge gap dashboard
+- Billing scaffolding (Stripe)
+
 ## Roadmap
 
-See [`FUTURE_IMPROVEMENTS.md`](FUTURE_IMPROVEMENTS.md) for the post-MVP roadmap
-(RAG/semantic search, voice input, M365/SharePoint, versioning, and more).
+See [`FUTURE_IMPROVEMENTS.md`](FUTURE_IMPROVEMENTS.md) for upcoming work
+(M365/SharePoint integration, advanced diagram generation, and more).
