@@ -86,10 +86,14 @@ export interface DocumentVersionListItem {
 /** How a user authenticated. Both ids are RFC-4122 UUIDs from disjoint namespaces. */
 export type AuthProvider = 'entra' | 'supabase';
 
+export type UserRole = 'admin' | 'member' | 'guest';
+
 /** Authenticated request context attached by the auth middleware. */
 export interface AuthContext {
   userId: string;
   orgId: string;
+  role: UserRole;
+  expiresAt: string | null;
   email: string | null;
   /** Which identity provider issued the validated token. */
   provider: AuthProvider;
@@ -98,4 +102,30 @@ export interface AuthContext {
    * Entra (work/school accounts); reflects email confirmation for Supabase.
    */
   emailVerified: boolean;
+}
+
+export interface Department {
+  id: string;
+  orgId: string;
+  name: string;
+  createdAt: string;
+  memberCount: number;
+}
+
+export interface OrgMember {
+  id: string;
+  name: string | null;
+  email: string | null;
+  role: UserRole;
+  expiresAt: string | null;
+  departments: string[];
+}
+
+export interface GuestInvite {
+  id: string;
+  email: string;
+  token: string;
+  expiresAt: string;
+  acceptedAt: string | null;
+  createdAt: string;
 }

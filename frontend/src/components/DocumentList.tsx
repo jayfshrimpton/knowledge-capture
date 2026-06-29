@@ -51,6 +51,11 @@ export default function DocumentList({
             <div className="flex items-center gap-2">
               <span className={`h-2 w-2 shrink-0 rounded-full ${FORMAT_DOT[doc.format]}`} />
               <span className="truncate text-sm font-medium text-slate-800">{doc.title}</span>
+              {doc.visibility === 'public' && (
+                <span className="shrink-0 rounded px-1 py-0.5 text-xs font-medium bg-emerald-50 text-emerald-600">
+                  Public
+                </span>
+              )}
               {doc.source === 'template' && (
                 <span className="shrink-0 rounded px-1 py-0.5 text-xs font-medium bg-slate-100 text-slate-500">
                   Template

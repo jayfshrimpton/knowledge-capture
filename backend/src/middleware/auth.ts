@@ -1,8 +1,8 @@
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response, NextFunction, RequestHandler } from 'express';
 import jwt, { JwtHeader, SigningKeyCallback } from 'jsonwebtoken';
 import jwksRsa from 'jwks-rsa';
 import { supabaseAdmin } from '../lib/supabase';
-import { AuthContext, AuthProvider } from '../types';
+import { AuthContext, AuthProvider, UserRole } from '../types';
 import { logger } from '../lib/logger';
 
 // Augment Express Request with our auth context.
@@ -191,6 +191,8 @@ export async function requireUser(req: Request, res: Response, next: NextFunctio
     req.auth = {
       userId: identity.userId,
       orgId: '',
+      role: 'member',
+      expiresAt: null,
       email: identity.email,
       provider: identity.provider,
       emailVerified: identity.emailVerified,
@@ -225,7 +227,7 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
 
     const { data: userRow, error: userErr } = await supabaseAdmin
       .from('users')
-      .select('org_id')
+      .select('org_id, role, expires_at')
       .eq('id', identity.userId)
       .maybeSingle();
 
@@ -238,9 +240,17 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
         .json({ error: 'User is not associated with an organisation', code: 'NO_ORG' });
     }
 
+    const expiresAt: string | null = userRow.expires_at ?? null;
+
+    if (userRow.role === 'guest' && expiresAt && new Date(expiresAt) < new Date()) {
+      return res.status(403).json({ error: 'Guest access has expired', code: 'GUEST_EXPIRED' });
+    }
+
     req.auth = {
       userId: identity.userId,
       orgId: userRow.org_id,
+      role: (userRow.role ?? 'member') as UserRole,
+      expiresAt,
       email: identity.email,
       provider: identity.provider,
       emailVerified: identity.emailVerified,
@@ -251,4 +261,17 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
     logger.error('requireAuth unexpected error', { route: 'auth', errorType: 'AuthMiddlewareError' });
     res.status(500).json({ error: 'Authentication failed' });
   }
+}
+
+/**
+ * Returns middleware that restricts access to users with one of the given roles.
+ * Must be used after requireAuth (which populates req.auth.role).
+ */
+export function requireRole(...roles: UserRole[]): RequestHandler {
+  return (req, res, next) => {
+    if (!req.auth || !roles.includes(req.auth.role)) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+    next();
+  };
 }

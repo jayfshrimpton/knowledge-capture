@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { requireAuth } from '../middleware/auth';
+import { requireAuth, requireRole } from '../middleware/auth';
 import { structureNotes } from '../services/gemini';
 import { generateEmbedding, buildDocumentText, TaskType } from '../services/embeddings';
 import { estimateCreditCost, finalCreditCost, hasCredits, deductCredits } from '../services/credits';
@@ -41,7 +41,7 @@ async function snapshotVersion(doc: DocumentRow, userId: string): Promise<void> 
  * org, and returns the saved row. If documentId is provided, updates the
  * existing document (snapshotting the current content as a version first).
  */
-router.post('/capture', requireAuth, async (req, res) => {
+router.post('/capture', requireAuth, requireRole('admin', 'member'), async (req, res) => {
   const { userId, orgId } = req.auth!;
   const title = (req.body?.title ?? '').trim();
   const author = (req.body?.author ?? '').trim();

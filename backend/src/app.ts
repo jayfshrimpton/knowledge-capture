@@ -11,6 +11,10 @@ import creditsRoutes from './routes/credits';
 import billingRoutes from './routes/billing';
 import searchRoutes from './routes/search';
 import transcribeRoutes from './routes/transcribe';
+import publicRoutes from './routes/public';
+import invitesRoutes from './routes/invites';
+import departmentRoutes from './routes/departments';
+import orgRoutes from './routes/org';
 
 const origins = (process.env.CORS_ORIGINS ?? 'http://localhost:5173')
   .split(',')
@@ -29,6 +33,9 @@ app.use(express.json({ limit: '2mb' }));
 
 app.get('/health', (_req, res) => res.json({ status: 'ok' }));
 
+// Public routes — no auth required; registered before protected routes.
+app.use('/api', publicRoutes);
+
 app.use('/api', bootstrapRoutes);
 app.use('/api', captureRoutes);
 app.use('/api', uploadRoutes);
@@ -38,6 +45,9 @@ app.use('/api', templateRoutes);
 app.use('/api', creditsRoutes);
 app.use('/api', billingRoutes);
 app.use('/api', searchRoutes);
+app.use('/api', invitesRoutes);
+app.use('/api', departmentRoutes);
+app.use('/api', orgRoutes);
 
 app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   logger.error('Unhandled error', { errorType: err?.code ?? 'UnhandledError' });

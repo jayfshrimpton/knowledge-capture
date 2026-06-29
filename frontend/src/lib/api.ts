@@ -1,5 +1,5 @@
 import { authHeader } from './session';
-import { DocumentRow, DocumentListItem, DocumentVersionListItem, DocumentVersionDetail, SearchResult, AskResponse } from '../types';
+import { DocumentRow, DocumentListItem, DocumentVersionListItem, DocumentVersionDetail, SearchResult, AskResponse, UserRole, Department, OrgMember, GuestInvite } from '../types';
 
 const API_URL = (import.meta.env.VITE_API_URL as string) ?? 'http://localhost:3001';
 
@@ -32,9 +32,10 @@ export interface MeResponse {
     id: string;
     name: string | null;
     email: string | null;
-    role: string;
+    role: UserRole;
     orgId: string;
     orgName: string | null;
+    expiresAt: string | null;
   };
 }
 
@@ -198,6 +199,176 @@ export async function askQuestion(question: string): Promise<AskResponse> {
     body: JSON.stringify({ question }),
   });
   return handle<AskResponse>(res);
+}
+
+// ---------------------------------------------------------------------------
+// Departments
+// ---------------------------------------------------------------------------
+
+export async function listDepartments(): Promise<Department[]> {
+  const res = await fetch(`${API_URL}/api/departments`, { headers: await authHeader() });
+  return handle<Department[]>(res);
+}
+
+export async function createDepartment(name: string): Promise<Department> {
+  const res = await fetch(`${API_URL}/api/departments`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...(await authHeader()) },
+    body: JSON.stringify({ name }),
+  });
+  return handle<Department>(res);
+}
+
+export async function deleteDepartment(id: string): Promise<void> {
+  const res = await fetch(`${API_URL}/api/departments/${id}`, {
+    method: 'DELETE',
+    headers: await authHeader(),
+  });
+  return handle<void>(res);
+}
+
+export async function addDeptMember(deptId: string, userId: string): Promise<void> {
+  const res = await fetch(`${API_URL}/api/departments/${deptId}/members/${userId}`, {
+    method: 'POST',
+    headers: await authHeader(),
+  });
+  return handle<void>(res);
+}
+
+export async function removeDeptMember(deptId: string, userId: string): Promise<void> {
+  const res = await fetch(`${API_URL}/api/departments/${deptId}/members/${userId}`, {
+    method: 'DELETE',
+    headers: await authHeader(),
+  });
+  return handle<void>(res);
+}
+
+export async function addDeptDocument(deptId: string, docId: string): Promise<void> {
+  const res = await fetch(`${API_URL}/api/departments/${deptId}/documents/${docId}`, {
+    method: 'POST',
+    headers: await authHeader(),
+  });
+  return handle<void>(res);
+}
+
+export async function removeDeptDocument(deptId: string, docId: string): Promise<void> {
+  const res = await fetch(`${API_URL}/api/departments/${deptId}/documents/${docId}`, {
+    method: 'DELETE',
+    headers: await authHeader(),
+  });
+  return handle<void>(res);
+}
+
+export async function updateDocumentVisibility(
+  docId: string,
+  patch: { visibility?: 'internal' | 'public'; departmentIds?: string[] },
+): Promise<void> {
+  const res = await fetch(`${API_URL}/api/documents/${docId}/visibility`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...(await authHeader()) },
+    body: JSON.stringify(patch),
+  });
+  return handle<void>(res);
+}
+
+// ---------------------------------------------------------------------------
+// Org members
+// ---------------------------------------------------------------------------
+
+export async function listOrgMembers(): Promise<OrgMember[]> {
+  const res = await fetch(`${API_URL}/api/org/members`, { headers: await authHeader() });
+  return handle<OrgMember[]>(res);
+}
+
+export async function updateOrgMember(
+  userId: string,
+  patch: { role?: UserRole; expiresAt?: string | null },
+): Promise<OrgMember> {
+  const res = await fetch(`${API_URL}/api/org/members/${userId}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...(await authHeader()) },
+    body: JSON.stringify(patch),
+  });
+  return handle<OrgMember>(res);
+}
+
+export async function removeOrgMember(userId: string): Promise<void> {
+  const res = await fetch(`${API_URL}/api/org/members/${userId}`, {
+    method: 'DELETE',
+    headers: await authHeader(),
+  });
+  return handle<void>(res);
+}
+
+// ---------------------------------------------------------------------------
+// Guest invites
+// ---------------------------------------------------------------------------
+
+export async function createGuestInvite(
+  email: string,
+  expiresAt: string,
+): Promise<{ token: string; link: string }> {
+  const res = await fetch(`${API_URL}/api/invites/guest`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...(await authHeader()) },
+    body: JSON.stringify({ email, expiresAt }),
+  });
+  return handle<{ token: string; link: string }>(res);
+}
+
+export async function listGuestInvites(): Promise<GuestInvite[]> {
+  const res = await fetch(`${API_URL}/api/invites`, { headers: await authHeader() });
+  return handle<GuestInvite[]>(res);
+}
+
+export async function getInviteByToken(
+  token: string,
+): Promise<{ email: string; orgName: string | null; expiresAt: string; valid: boolean }> {
+  const res = await fetch(`${API_URL}/api/invites/${token}`);
+  return handle(res);
+}
+
+export async function acceptInvite(token: string): Promise<{ orgId: string }> {
+  const res = await fetch(`${API_URL}/api/invites/${token}/accept`, {
+    method: 'POST',
+    headers: await authHeader(),
+  });
+  return handle<{ orgId: string }>(res);
+}
+
+// ---------------------------------------------------------------------------
+// Document shares
+// ---------------------------------------------------------------------------
+
+export async function listDocumentShares(docId: string): Promise<OrgMember[]> {
+  const res = await fetch(`${API_URL}/api/documents/${docId}/shares`, { headers: await authHeader() });
+  return handle<OrgMember[]>(res);
+}
+
+export async function shareDocument(docId: string, userId: string): Promise<void> {
+  const res = await fetch(`${API_URL}/api/documents/${docId}/shares`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...(await authHeader()) },
+    body: JSON.stringify({ userId }),
+  });
+  return handle<void>(res);
+}
+
+export async function unshareDocument(docId: string, userId: string): Promise<void> {
+  const res = await fetch(`${API_URL}/api/documents/${docId}/shares/${userId}`, {
+    method: 'DELETE',
+    headers: await authHeader(),
+  });
+  return handle<void>(res);
+}
+
+// ---------------------------------------------------------------------------
+// Public document access (no auth)
+// ---------------------------------------------------------------------------
+
+export async function getPublicDocument(id: string): Promise<DocumentRow> {
+  const res = await fetch(`${API_URL}/api/public/documents/${id}`);
+  return handle<DocumentRow>(res);
 }
 
 export async function transcribeAudio(blob: Blob, filename = 'recording.webm'): Promise<{ transcript: string }> {

@@ -2,12 +2,15 @@ import { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import DocumentList from '../components/DocumentList';
 import DocumentOutput from '../components/DocumentOutput';
-import { listDocuments, getDocument, searchDocuments, askQuestion } from '../lib/api';
-import { DocumentListItem, DocumentRow, SearchResult, AskResponse } from '../types';
+import { useAuth } from '../components/AuthProvider';
+import { listDocuments, getDocument, searchDocuments, askQuestion, listDepartments } from '../lib/api';
+import { DocumentListItem, DocumentRow, SearchResult, AskResponse, Department } from '../types';
 
 export default function Library() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { me } = useAuth();
+  const role = me?.user?.role;
 
   // Document list state
   const [items, setItems] = useState<DocumentListItem[]>([]);
@@ -15,6 +18,10 @@ export default function Library() {
   const [loadingList, setLoadingList] = useState(true);
   const [loadingDoc, setLoadingDoc] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Department filter
+  const [departments, setDepartments] = useState<Department[]>([]);
+  const [selectedDeptId, setSelectedDeptId] = useState<string | null>(null);
 
   // Search / Ask state
   const [searchMode, setSearchMode] = useState<'search' | 'ask'>('search');
@@ -27,14 +34,18 @@ export default function Library() {
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // ---------------------------------------------------------------------------
-  // Initial document list load
+  // Initial document list load + departments
   // ---------------------------------------------------------------------------
   useEffect(() => {
     listDocuments()
       .then(setItems)
       .catch((err) => setError(err instanceof Error ? err.message : 'Failed to load documents'))
       .finally(() => setLoadingList(false));
-  }, []);
+
+    if (role !== 'guest') {
+      listDepartments().then(setDepartments).catch(() => {});
+    }
+  }, [role]);
 
   // ---------------------------------------------------------------------------
   // Load selected document when URL id changes
@@ -190,8 +201,13 @@ export default function Library() {
     );
   }
 
-  // In search mode, show search results if available, otherwise all docs.
-  const displayItems: DocumentListItem[] = searchResults ?? items;
+  // In search mode, show search results if available, otherwise filter by dept.
+  const displayItems: DocumentListItem[] =
+    searchResults !== null
+      ? searchResults
+      : selectedDeptId
+      ? items.filter((d) => d.departments.includes(selectedDeptId))
+      : items;
 
   // Show the answer panel when: ask mode is active, an answer is ready, and
   // no document is currently selected (selecting a source doc overrides it).
@@ -314,6 +330,47 @@ export default function Library() {
           </div>
         )}
 
+        {/* Department filter pills — search mode only, non-guest */}
+        {searchMode === 'search' && departments.length > 0 && (
+          <div className="mb-3 flex flex-wrap gap-1.5">
+            <button
+              onClick={() => setSelectedDeptId(null)}
+              style={{
+                padding: '0.2rem 0.65rem',
+                borderRadius: '999px',
+                fontSize: '0.75rem',
+                fontWeight: selectedDeptId === null ? 600 : 400,
+                border: '1px solid',
+                borderColor: selectedDeptId === null ? 'var(--accent)' : 'var(--border-default)',
+                background: selectedDeptId === null ? 'var(--accent-subtle)' : 'transparent',
+                color: selectedDeptId === null ? 'var(--accent)' : 'var(--text-muted)',
+                cursor: 'pointer',
+              }}
+            >
+              All
+            </button>
+            {departments.map((dept) => (
+              <button
+                key={dept.id}
+                onClick={() => setSelectedDeptId(selectedDeptId === dept.id ? null : dept.id)}
+                style={{
+                  padding: '0.2rem 0.65rem',
+                  borderRadius: '999px',
+                  fontSize: '0.75rem',
+                  fontWeight: selectedDeptId === dept.id ? 600 : 400,
+                  border: '1px solid',
+                  borderColor: selectedDeptId === dept.id ? 'var(--accent)' : 'var(--border-default)',
+                  background: selectedDeptId === dept.id ? 'var(--accent-subtle)' : 'transparent',
+                  color: selectedDeptId === dept.id ? 'var(--accent)' : 'var(--text-muted)',
+                  cursor: 'pointer',
+                }}
+              >
+                {dept.name}
+              </button>
+            ))}
+          </div>
+        )}
+
         {/* Document list — only shown in search mode */}
         {searchMode === 'search' && (
           loadingList ? (
@@ -332,6 +389,23 @@ export default function Library() {
       {/* Main content area                                                   */}
       {/* ------------------------------------------------------------------ */}
       <section>
+        {/* Guest read-only banner */}
+        {role === 'guest' && (
+          <div
+            className="mb-4 rounded-lg border px-4 py-3 text-sm"
+            style={{
+              borderColor: 'var(--border-default)',
+              background: 'var(--accent-subtle)',
+              color: 'var(--accent)',
+            }}
+          >
+            You have read-only guest access
+            {me?.user?.expiresAt && (
+              <> · expires {new Date(me.user.expiresAt).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })}</>
+            )}
+          </div>
+        )}
+
         {error && <p className="mb-3 text-sm text-red-600">{error}</p>}
 
         {/* Ask answer panel */}

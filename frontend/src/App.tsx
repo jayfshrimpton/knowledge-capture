@@ -7,6 +7,8 @@ import Library from './pages/Library';
 import Templates from './pages/Templates';
 import Billing from './pages/Billing';
 import ResetPassword from './pages/ResetPassword';
+import OrgSettings from './pages/OrgSettings';
+import AcceptInvite from './pages/AcceptInvite';
 import HomePage from './pages/marketing/HomePage';
 import HowItWorksPage from './pages/marketing/HowItWorksPage';
 import PricingPage from './pages/marketing/PricingPage';
@@ -91,10 +93,11 @@ function Header() {
           </Link>
 
           <nav style={{ display: 'flex', alignItems: 'center', gap: '1.75rem' }}>
-            {navLink('/', 'Capture', pathname === '/')}
+            {me?.user?.role !== 'guest' && navLink('/', 'Capture', pathname === '/')}
             {navLink('/library', 'Library', pathname.startsWith('/library'))}
-            {navLink('/templates', 'Templates', pathname.startsWith('/templates'))}
+            {me?.user?.role !== 'guest' && navLink('/templates', 'Templates', pathname.startsWith('/templates'))}
             {me?.user?.role === 'admin' && navLink('/billing', 'Billing', pathname.startsWith('/billing'))}
+            {me?.user?.role === 'admin' && navLink('/settings', 'Settings', pathname.startsWith('/settings'))}
           </nav>
         </div>
 
@@ -160,6 +163,7 @@ export default function App() {
         <Route path="/security" element={<SecurityPage />} />
         <Route path="/demo" element={<RequestDemoPage />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/accept-invite" element={<AcceptInvite />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     );
@@ -185,7 +189,9 @@ export default function App() {
           <Route path="/library/:id" element={<Library />} />
           <Route path="/templates" element={<Templates />} />
           <Route path="/billing" element={<Billing />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="/settings" element={<OrgSettings />} />
+          <Route path="/accept-invite" element={<AcceptInvite />} />
+          <Route path="*" element={<Navigate to="/library" replace />} />
         </Routes>
       </main>
     </div>

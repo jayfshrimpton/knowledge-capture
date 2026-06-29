@@ -1,4 +1,6 @@
 export type DocumentFormat = 'procedure' | 'checklist' | 'diagram' | 'reference';
+export type UserRole = 'admin' | 'member' | 'guest';
+export type DocumentVisibility = 'internal' | 'public';
 
 export interface DocumentSection {
   heading?: string;
@@ -41,6 +43,7 @@ export interface DocumentRow {
   raw_input: string | null;
   source_file_path: string | null;
   source: 'ai' | 'template';
+  visibility: DocumentVisibility;
   version: number;
   created_at: string;
   updated_at: string;
@@ -70,6 +73,8 @@ export interface DocumentListItem {
   summary: string | null;
   tags: string[] | null;
   source: 'ai' | 'template';
+  visibility: DocumentVisibility;
+  departments: string[];
   created_at: string;
   updated_at: string;
 }
@@ -83,4 +88,30 @@ export interface SearchResult extends DocumentListItem {
 export interface AskResponse {
   answer: string;
   sources: Array<{ id: string; title: string; similarity: number }>;
+}
+
+export interface Department {
+  id: string;
+  orgId: string;
+  name: string;
+  createdAt: string;
+  memberCount: number;
+}
+
+export interface OrgMember {
+  id: string;
+  name: string | null;
+  email: string | null;
+  role: UserRole;
+  expiresAt: string | null;
+  departments: string[];
+}
+
+export interface GuestInvite {
+  id: string;
+  email: string;
+  token: string;
+  expiresAt: string;
+  acceptedAt: string | null;
+  createdAt: string;
 }
