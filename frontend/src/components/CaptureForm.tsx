@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { capture, uploadFile } from '../lib/api';
+import { capture, uploadFile, transcribeAudio } from '../lib/api';
 import { DocumentRow } from '../types';
 import { useAuth } from './AuthProvider';
 
@@ -26,8 +26,13 @@ export default function CaptureForm({
   const [uploadName, setUploadName] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [recording, setRecording] = useState(false);
+  const [transcribing, setTranscribing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
+  const audioFileInput = useRef<HTMLInputElement>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
 
   const words = countWords(text);
   const tooShort = words > 0 && words < MIN_WORDS;
@@ -48,6 +53,55 @@ export default function CaptureForm({
     } finally {
       setUploading(false);
       if (fileInput.current) fileInput.current.value = '';
+    }
+  }
+
+  async function handleAudioFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setTranscribing(true);
+    setError(null);
+    try {
+      const { transcript } = await transcribeAudio(file, file.name);
+      setText((prev) => (prev ? `${prev}\n\n${transcript}` : transcript));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Transcription failed');
+    } finally {
+      setTranscribing(false);
+      if (audioFileInput.current) audioFileInput.current.value = '';
+    }
+  }
+
+  async function toggleRecording() {
+    if (recording) {
+      mediaRecorderRef.current?.stop();
+      return;
+    }
+    setError(null);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mr = new MediaRecorder(stream);
+      audioChunksRef.current = [];
+      mr.ondataavailable = (e) => { if (e.data.size > 0) audioChunksRef.current.push(e.data); };
+      mr.onstop = async () => {
+        stream.getTracks().forEach((t) => t.stop());
+        const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        setRecording(false);
+        setTranscribing(true);
+        try {
+          const { transcript } = await transcribeAudio(blob);
+          setText((prev) => (prev ? `${prev}\n\n${transcript}` : transcript));
+        } catch (err) {
+          setError(err instanceof Error ? err.message : 'Transcription failed');
+        } finally {
+          setTranscribing(false);
+        }
+      };
+      mr.start();
+      mediaRecorderRef.current = mr;
+      setRecording(true);
+    } catch {
+      setError('Microphone access denied');
     }
   }
 
@@ -158,6 +212,33 @@ export default function CaptureForm({
           gap: '0.75rem',
         }}
       >
+        <button
+          type="button"
+          className="btn-secondary"
+          onClick={toggleRecording}
+          disabled={transcribing || uploading}
+          style={{ height: '2.25rem', fontSize: '0.8125rem', color: recording ? 'var(--status-warning)' : undefined }}
+        >
+          {recording ? 'Stop recording' : 'Record audio'}
+        </button>
+
+        <button
+          type="button"
+          className="btn-secondary"
+          onClick={() => audioFileInput.current?.click()}
+          disabled={transcribing || uploading || recording}
+          style={{ height: '2.25rem', fontSize: '0.8125rem' }}
+        >
+          {transcribing ? 'Transcribing…' : 'Upload audio'}
+        </button>
+        <input
+          ref={audioFileInput}
+          type="file"
+          accept=".mp3,.mp4,.wav,.webm,.ogg,.m4a,.aac,.flac"
+          onChange={handleAudioFile}
+          style={{ display: 'none' }}
+        />
+
         <button
           type="button"
           className="btn-secondary"

@@ -10,6 +10,7 @@ import templateRoutes from './routes/templates';
 import creditsRoutes from './routes/credits';
 import billingRoutes from './routes/billing';
 import searchRoutes from './routes/search';
+import transcribeRoutes from './routes/transcribe';
 
 const origins = (process.env.CORS_ORIGINS ?? 'http://localhost:5173')
   .split(',')
@@ -31,6 +32,7 @@ app.get('/health', (_req, res) => res.json({ status: 'ok' }));
 app.use('/api', bootstrapRoutes);
 app.use('/api', captureRoutes);
 app.use('/api', uploadRoutes);
+app.use('/api', transcribeRoutes);
 app.use('/api', documentRoutes);
 app.use('/api', templateRoutes);
 app.use('/api', creditsRoutes);

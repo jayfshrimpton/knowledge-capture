@@ -200,6 +200,17 @@ export async function askQuestion(question: string): Promise<AskResponse> {
   return handle<AskResponse>(res);
 }
 
+export async function transcribeAudio(blob: Blob, filename = 'recording.webm'): Promise<{ transcript: string }> {
+  const form = new FormData();
+  form.append('audio', blob, filename);
+  const res = await fetch(`${API_URL}/api/transcribe`, {
+    method: 'POST',
+    headers: await authHeader(),
+    body: form,
+  });
+  return handle(res);
+}
+
 // ---------------------------------------------------------------------------
 // Billing
 // ---------------------------------------------------------------------------
