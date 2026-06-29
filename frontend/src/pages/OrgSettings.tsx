@@ -84,7 +84,6 @@ function MembersTab() {
             <tr className="border-b" style={{ borderColor: 'var(--border-subtle)' }}>
               <th className="pb-2 text-left font-medium" style={{ color: 'var(--text-muted)' }}>Name / Email</th>
               <th className="pb-2 text-left font-medium" style={{ color: 'var(--text-muted)' }}>Role</th>
-              <th className="pb-2 text-left font-medium" style={{ color: 'var(--text-muted)' }}>Expires</th>
               <th />
             </tr>
           </thead>
@@ -122,11 +121,6 @@ function MembersTab() {
                       <option value="guest">Guest</option>
                     </select>
                   )}
-                </td>
-                <td className="py-2.5 pr-4" style={{ color: 'var(--text-muted)', fontSize: '0.8125rem' }}>
-                  {m.expiresAt
-                    ? new Date(m.expiresAt).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })
-                    : '—'}
                 </td>
                 <td className="py-2.5 text-right">
                   {m.id !== me?.user?.id && (

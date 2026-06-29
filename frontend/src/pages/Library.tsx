@@ -400,9 +400,6 @@ export default function Library() {
             }}
           >
             You have read-only guest access
-            {me?.user?.expiresAt && (
-              <> · expires {new Date(me.user.expiresAt).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })}</>
-            )}
           </div>
         )}
 

@@ -227,7 +227,7 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
 
     const { data: userRow, error: userErr } = await supabaseAdmin
       .from('users')
-      .select('org_id, role, expires_at')
+      .select('org_id, role')
       .eq('id', identity.userId)
       .maybeSingle();
 
@@ -240,17 +240,11 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
         .json({ error: 'User is not associated with an organisation', code: 'NO_ORG' });
     }
 
-    const expiresAt: string | null = userRow.expires_at ?? null;
-
-    if (userRow.role === 'guest' && expiresAt && new Date(expiresAt) < new Date()) {
-      return res.status(403).json({ error: 'Guest access has expired', code: 'GUEST_EXPIRED' });
-    }
-
     req.auth = {
       userId: identity.userId,
       orgId: userRow.org_id,
       role: (userRow.role ?? 'member') as UserRole,
-      expiresAt,
+      expiresAt: null,
       email: identity.email,
       provider: identity.provider,
       emailVerified: identity.emailVerified,

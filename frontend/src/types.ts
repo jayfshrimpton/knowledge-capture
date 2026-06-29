@@ -103,7 +103,6 @@ export interface OrgMember {
   name: string | null;
   email: string | null;
   role: UserRole;
-  expiresAt: string | null;
   departments: string[];
 }
 

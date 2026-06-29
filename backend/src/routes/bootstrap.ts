@@ -14,7 +14,7 @@ router.get('/me', requireUser, async (req, res) => {
 
   const { data: userRow, error } = await supabaseAdmin
     .from('users')
-    .select('id, name, email, role, expires_at, org_id, organisations(name)')
+    .select('id, name, email, role, org_id, organisations(name)')
     .eq('id', userId)
     .maybeSingle();
 
@@ -32,7 +32,6 @@ router.get('/me', requireUser, async (req, res) => {
       role: userRow.role,
       orgId: userRow.org_id,
       orgName: (userRow as any).organisations?.name ?? null,
-      expiresAt: userRow.expires_at ?? null,
     },
   });
 });

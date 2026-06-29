@@ -12,7 +12,7 @@ router.get('/org/members', requireAuth, requireRole('admin'), async (req, res) =
 
   const { data: users, error: userErr } = await supabaseAdmin
     .from('users')
-    .select('id, name, email, role, expires_at')
+    .select('id, name, email, role')
     .eq('org_id', orgId)
     .order('name');
 
@@ -38,7 +38,6 @@ router.get('/org/members', requireAuth, requireRole('admin'), async (req, res) =
     name: u.name,
     email: u.email,
     role: u.role,
-    expiresAt: u.expires_at ?? null,
     departments: deptMap.get(u.id) ?? [],
   }));
 
@@ -48,7 +47,7 @@ router.get('/org/members', requireAuth, requireRole('admin'), async (req, res) =
 /** PATCH /api/org/members/:userId — update a member's role and/or expiry (admin only). */
 router.patch('/org/members/:userId', requireAuth, requireRole('admin'), async (req, res) => {
   const { orgId, userId: adminId } = req.auth!;
-  const { role, expiresAt } = req.body ?? {};
+  const { role } = req.body ?? {};
 
   if (req.params.userId === adminId) {
     return res.status(400).json({ error: 'You cannot change your own role' });
@@ -60,7 +59,6 @@ router.patch('/org/members/:userId', requireAuth, requireRole('admin'), async (r
 
   const update: Record<string, unknown> = {};
   if (role) update.role = role as UserRole;
-  if (expiresAt !== undefined) update.expires_at = expiresAt;
 
   if (Object.keys(update).length === 0) {
     return res.status(400).json({ error: 'Nothing to update' });
@@ -71,7 +69,7 @@ router.patch('/org/members/:userId', requireAuth, requireRole('admin'), async (r
     .update(update)
     .eq('id', req.params.userId)
     .eq('org_id', orgId)
-    .select('id, name, email, role, expires_at')
+    .select('id, name, email, role')
     .single();
 
   if (error || !data) {
@@ -84,7 +82,6 @@ router.patch('/org/members/:userId', requireAuth, requireRole('admin'), async (r
     name: data.name,
     email: data.email,
     role: data.role,
-    expiresAt: data.expires_at ?? null,
     departments: [],
   });
 });

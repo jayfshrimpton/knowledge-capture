@@ -35,7 +35,6 @@ export interface MeResponse {
     role: UserRole;
     orgId: string;
     orgName: string | null;
-    expiresAt: string | null;
   };
 }
 
@@ -282,7 +281,7 @@ export async function listOrgMembers(): Promise<OrgMember[]> {
 
 export async function updateOrgMember(
   userId: string,
-  patch: { role?: UserRole; expiresAt?: string | null },
+  patch: { role?: UserRole },
 ): Promise<OrgMember> {
   const res = await fetch(`${API_URL}/api/org/members/${userId}`, {
     method: 'PATCH',

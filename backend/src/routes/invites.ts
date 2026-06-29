@@ -116,7 +116,6 @@ router.post('/invites/:token/accept', requireUser, async (req, res) => {
       org_id: invite.org_id,
       email: email ?? invite.email,
       role: 'guest',
-      expires_at: invite.expires_at,
       auth_provider: 'supabase',
     },
     { onConflict: 'id' },

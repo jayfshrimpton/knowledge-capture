@@ -366,7 +366,7 @@ router.get('/documents/:id/shares', requireAuth, requireRole('admin'), async (re
 
   const { data, error } = await supabaseAdmin
     .from('document_shares')
-    .select('user_id, users(id, name, email, role, expires_at)')
+    .select('user_id, users(id, name, email, role)')
     .eq('document_id', req.params.id);
 
   if (error) {
@@ -379,7 +379,6 @@ router.get('/documents/:id/shares', requireAuth, requireRole('admin'), async (re
     name: r.users.name,
     email: r.users.email,
     role: r.users.role,
-    expiresAt: r.users.expires_at ?? null,
     departments: [],
   }));
 
