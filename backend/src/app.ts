@@ -9,6 +9,7 @@ import documentRoutes from './routes/documents';
 import templateRoutes from './routes/templates';
 import creditsRoutes from './routes/credits';
 import billingRoutes from './routes/billing';
+import searchRoutes from './routes/search';
 
 const origins = (process.env.CORS_ORIGINS ?? 'http://localhost:5173')
   .split(',')
@@ -34,6 +35,7 @@ app.use('/api', documentRoutes);
 app.use('/api', templateRoutes);
 app.use('/api', creditsRoutes);
 app.use('/api', billingRoutes);
+app.use('/api', searchRoutes);
 
 app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   logger.error('Unhandled error', { errorType: err?.code ?? 'UnhandledError' });

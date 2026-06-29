@@ -1,5 +1,5 @@
 import { authHeader } from './session';
-import { DocumentRow, DocumentListItem, DocumentVersionListItem, DocumentVersionDetail } from '../types';
+import { DocumentRow, DocumentListItem, DocumentVersionListItem, DocumentVersionDetail, SearchResult, AskResponse } from '../types';
 
 const API_URL = (import.meta.env.VITE_API_URL as string) ?? 'http://localhost:3001';
 
@@ -176,6 +176,28 @@ export async function createFromTemplate(
     body: JSON.stringify(payload),
   });
   return handle<DocumentRow>(res);
+}
+
+// ---------------------------------------------------------------------------
+// Search & Ask (RAG)
+// ---------------------------------------------------------------------------
+
+export async function searchDocuments(query: string, limit = 10): Promise<SearchResult[]> {
+  const res = await fetch(`${API_URL}/api/search`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...(await authHeader()) },
+    body: JSON.stringify({ query, limit }),
+  });
+  return handle<SearchResult[]>(res);
+}
+
+export async function askQuestion(question: string): Promise<AskResponse> {
+  const res = await fetch(`${API_URL}/api/ask`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...(await authHeader()) },
+    body: JSON.stringify({ question }),
+  });
+  return handle<AskResponse>(res);
 }
 
 // ---------------------------------------------------------------------------

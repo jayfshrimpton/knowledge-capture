@@ -73,3 +73,14 @@ export interface DocumentListItem {
   created_at: string;
   updated_at: string;
 }
+
+/** Result from POST /api/search — DocumentListItem plus a similarity score. */
+export interface SearchResult extends DocumentListItem {
+  similarity: number;
+}
+
+/** Response from POST /api/ask. */
+export interface AskResponse {
+  answer: string;
+  sources: Array<{ id: string; title: string; similarity: number }>;
+}

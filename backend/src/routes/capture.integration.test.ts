@@ -58,6 +58,20 @@ vi.mock('../services/gemini', () => ({
   structureNotes: (...args: unknown[]) => mockStructureNotes(...args),
 }));
 
+// ---------------------------------------------------------------------------
+// Mock embeddings — capture now generates an embedding after saving.
+// Mock it to avoid hitting the Gemini API and keep tests deterministic.
+// ---------------------------------------------------------------------------
+
+vi.mock('../services/embeddings', () => ({
+  generateEmbedding: vi.fn().mockResolvedValue(new Array(768).fill(0.1)),
+  buildDocumentText: vi.fn().mockReturnValue('test document text'),
+  TaskType: {
+    RETRIEVAL_QUERY: 'RETRIEVAL_QUERY',
+    RETRIEVAL_DOCUMENT: 'RETRIEVAL_DOCUMENT',
+  },
+}));
+
 const STRUCTURED_DOC = {
   format: 'procedure' as const,
   summary: 'A test procedure.',

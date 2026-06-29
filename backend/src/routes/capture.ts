@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { requireAuth } from '../middleware/auth';
 import { structureNotes } from '../services/gemini';
+import { generateEmbedding, buildDocumentText, TaskType } from '../services/embeddings';
 import { estimateCreditCost, finalCreditCost, hasCredits, deductCredits } from '../services/credits';
 import { supabaseAdmin } from '../lib/supabase';
 import { contentToText } from '../lib/contentToText';
@@ -192,6 +193,18 @@ router.post('/capture', requireAuth, async (req, res) => {
       return res.status(500).json({ error: 'Failed to save document' });
     }
     savedDoc = data as DocumentRow;
+  }
+
+  // Generate and store embedding — non-fatal; document is already saved.
+  try {
+    const embText = buildDocumentText(savedDoc);
+    const embedding = await generateEmbedding(embText, TaskType.RETRIEVAL_DOCUMENT);
+    await supabaseAdmin
+      .from('documents')
+      .update({ embedding: `[${embedding.join(',')}]` })
+      .eq('id', savedDoc.id);
+  } catch {
+    logger.warn('Embedding generation failed', { route: 'POST /api/capture', errorType: 'EmbeddingError' });
   }
 
   // Deduct credits based on the actual output format (diagram costs more).

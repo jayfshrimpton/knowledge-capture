@@ -2,6 +2,17 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import { StructuredDocument, DocumentFormat } from '../types';
 import { withRetry } from '../lib/retry';
 
+// ---------------------------------------------------------------------------
+// Q&A model — used by answerQuestion(), separate from the structuring model
+// ---------------------------------------------------------------------------
+
+const QA_SYSTEM_PROMPT = `You are answering questions based on documents from a knowledge base.
+Answer ONLY using information present in the provided documents.
+If the documents don't contain enough information to answer the question, say so clearly.
+Return ONLY valid JSON matching this schema:
+{ "answer": "your answer here", "cited_ids": ["doc-uuid-1", "doc-uuid-2"] }
+cited_ids must contain only the IDs of documents that directly support your answer.`;
+
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 if (!GEMINI_API_KEY) {
   throw new Error('Missing GEMINI_API_KEY environment variable.');
@@ -54,6 +65,16 @@ Rules:
 
 const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
 
+const qaModel = genAI.getGenerativeModel({
+  model: 'gemini-2.5-flash-lite',
+  systemInstruction: QA_SYSTEM_PROMPT,
+  generationConfig: {
+    responseMimeType: 'application/json',
+    maxOutputTokens: 2000,
+    temperature: 0.3,
+  },
+});
+
 const model = genAI.getGenerativeModel({
   model: 'gemini-2.5-flash-lite',
   systemInstruction: SYSTEM_PROMPT,
@@ -83,6 +104,37 @@ function normalise(parsed: any): StructuredDocument {
     diagram: format === 'diagram' && parsed?.diagram ? parsed.diagram : null,
     warnings: Array.isArray(parsed?.warnings) ? parsed.warnings : [],
     tags: Array.isArray(parsed?.tags) ? parsed.tags : [],
+  };
+}
+
+/**
+ * Answers a question using the top-k retrieved documents as context.
+ * Returns the answer text and the IDs of documents that supported it.
+ */
+export async function answerQuestion(
+  question: string,
+  docs: Array<{ id: string; title: string; summary: string | null; raw_input: string | null }>,
+): Promise<{ answer: string; cited_ids: string[] }> {
+  const contextParts = docs.map((doc, i) => {
+    const excerpt = (doc.raw_input ?? doc.summary ?? '').slice(0, 1500);
+    const summaryLine = doc.summary ? `Summary: ${doc.summary}\n` : '';
+    return `Document ${i + 1} (ID: ${doc.id})\nTitle: ${doc.title}\n${summaryLine}Content:\n${excerpt}`;
+  });
+
+  const prompt =
+    `Question: ${question}\n\nAvailable documents:\n---\n` +
+    contextParts.join('\n\n---\n') +
+    '\n---\n\nReturn JSON with "answer" and "cited_ids".';
+
+  const result = await qaModel.generateContent(prompt);
+  const raw = result.response.text();
+  const parsed = JSON.parse(raw);
+
+  return {
+    answer: typeof parsed.answer === 'string' ? parsed.answer : 'Unable to generate an answer.',
+    cited_ids: Array.isArray(parsed.cited_ids)
+      ? parsed.cited_ids.filter((id: unknown) => typeof id === 'string')
+      : [],
   };
 }
 
