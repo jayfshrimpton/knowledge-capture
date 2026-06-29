@@ -43,7 +43,17 @@ router.post('/search', requireAuth, async (req, res) => {
     return res.status(500).json({ error: 'Search failed' });
   }
 
-  res.json(data ?? []);
+  const results = data ?? [];
+
+  // Fire-and-forget: log query + result count for the gap dashboard.
+  void (async () => {
+    const { error: logError } = await supabaseAdmin
+      .from('search_logs')
+      .insert({ org_id: orgId, query, result_count: results.length });
+    if (logError) logger.error('Search log insert failed', { route: 'POST /api/search', errorType: 'SupabaseInsertError' });
+  })();
+
+  res.json(results);
 });
 
 /**

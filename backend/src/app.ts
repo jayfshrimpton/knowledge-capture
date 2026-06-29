@@ -15,6 +15,7 @@ import publicRoutes from './routes/public';
 import invitesRoutes from './routes/invites';
 import departmentRoutes from './routes/departments';
 import orgRoutes from './routes/org';
+import gapsRoutes from './routes/gaps';
 
 const origins = (process.env.CORS_ORIGINS ?? 'http://localhost:5173')
   .split(',')
@@ -48,6 +49,7 @@ app.use('/api', searchRoutes);
 app.use('/api', invitesRoutes);
 app.use('/api', departmentRoutes);
 app.use('/api', orgRoutes);
+app.use('/api', gapsRoutes);
 
 app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   logger.error('Unhandled error', { errorType: err?.code ?? 'UnhandledError' });

@@ -383,6 +383,55 @@ export async function transcribeAudio(blob: Blob, filename = 'recording.webm'): 
 }
 
 // ---------------------------------------------------------------------------
+// Gap dashboard
+// ---------------------------------------------------------------------------
+
+export interface FlaggedDoc {
+  id: string;
+  title: string;
+  warnings: string[];
+  author_name: string | null;
+  created_at: string;
+}
+
+export interface SearchMiss {
+  query: string;
+  count: number;
+}
+
+export interface TagCoverage {
+  tag: string;
+  count: number;
+}
+
+export interface UserActivity {
+  userId: string;
+  email: string;
+  name: string | null;
+  count: number;
+}
+
+export async function getGapsFlagged(): Promise<FlaggedDoc[]> {
+  const res = await fetch(`${API_URL}/api/gaps/flagged`, { headers: await authHeader() });
+  return handle<FlaggedDoc[]>(res);
+}
+
+export async function getGapsSearchMisses(): Promise<SearchMiss[]> {
+  const res = await fetch(`${API_URL}/api/gaps/search-misses`, { headers: await authHeader() });
+  return handle<SearchMiss[]>(res);
+}
+
+export async function getGapsCoverage(): Promise<TagCoverage[]> {
+  const res = await fetch(`${API_URL}/api/gaps/coverage`, { headers: await authHeader() });
+  return handle<TagCoverage[]>(res);
+}
+
+export async function getGapsActivity(): Promise<UserActivity[]> {
+  const res = await fetch(`${API_URL}/api/gaps/activity`, { headers: await authHeader() });
+  return handle<UserActivity[]>(res);
+}
+
+// ---------------------------------------------------------------------------
 // Billing
 // ---------------------------------------------------------------------------
 
