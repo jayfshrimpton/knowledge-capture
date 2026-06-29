@@ -4,7 +4,7 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Structa — Lochmara (primary blue)
+        // Commonplace — Lochmara (primary blue)
         lochmara: {
           lightest: '#e5f1f9',
           lighter:  '#cce3f4',
@@ -14,7 +14,7 @@ export default {
           darker:   '#002f51',
           darkest:  '#00233d',
         },
-        // Structa — Burning Orange (secondary / warning)
+        // Commonplace — Burning Orange (secondary / warning)
         orange: {
           lightest: '#fff0ea',
           lighter:  '#ffe1d6',
@@ -24,7 +24,7 @@ export default {
           darker:   '#662a15',
           darkest:  '#4c200f',
         },
-        // Structa — Apple (tertiary / success)
+        // Commonplace — Apple (tertiary / success)
         apple: {
           lightest: '#f0f7ec',
           lighter:  '#e1f0da',
@@ -34,7 +34,7 @@ export default {
           darker:   '#2a481c',
           darkest:  '#1f3615',
         },
-        // Structa — Neutral / ink scale
+        // Commonplace — Neutral / ink scale
         ink: {
           lightest: '#f2f2f2',
           lighter:  '#d9dad9',

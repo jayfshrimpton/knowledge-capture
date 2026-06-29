@@ -87,7 +87,7 @@ function Header() {
               flexShrink: 0,
             }}
           >
-            Structa
+            Commonplace
           </Link>
 
           <nav style={{ display: 'flex', alignItems: 'center', gap: '1.75rem' }}>

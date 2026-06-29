@@ -30,7 +30,7 @@ vi.mock('../middleware/auth', () => ({
     req.auth = {
       userId: authCtx.userId,
       orgId: authCtx.orgId,
-      email: 'test@structa-test.invalid',
+      email: 'test@commonplace-test.invalid',
       provider: 'supabase',
       emailVerified: true,
     };
@@ -40,7 +40,7 @@ vi.mock('../middleware/auth', () => ({
     req.auth = {
       userId: authCtx.userId,
       orgId: authCtx.orgId,
-      email: 'test@structa-test.invalid',
+      email: 'test@commonplace-test.invalid',
       provider: 'supabase',
       emailVerified: true,
     };

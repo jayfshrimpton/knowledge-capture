@@ -21,15 +21,15 @@ const controlsItems = [
   },
   {
     title: 'What audit trail capabilities are available?',
-    content: 'Structa maintains an immutable log of all significant actions: user sign-ins, document creation, edits, approvals, exports, and permission changes. The log captures user identity, timestamp, action type, and document version. Logs are exportable in CSV or JSON format for integration with your SIEM or compliance reporting tools.',
+    content: 'Commonplace maintains an immutable log of all significant actions: user sign-ins, document creation, edits, approvals, exports, and permission changes. The log captures user identity, timestamp, action type, and document version. Logs are exportable in CSV or JSON format for integration with your SIEM or compliance reporting tools.',
   },
   {
-    title: 'How does Structa handle MFA and conditional access?',
-    content: 'For Microsoft 365 organisations, MFA and conditional access policies are enforced through Entra ID — Structa inherits your existing security posture without requiring separate configuration. For non-SSO accounts, TOTP-based MFA can be enforced at the organisation level by admins.',
+    title: 'How does Commonplace handle MFA and conditional access?',
+    content: 'For Microsoft 365 organisations, MFA and conditional access policies are enforced through Entra ID — Commonplace inherits your existing security posture without requiring separate configuration. For non-SSO accounts, TOTP-based MFA can be enforced at the organisation level by admins.',
   },
   {
     title: 'What happens to data when an employee leaves?',
-    content: 'User accounts can be suspended or deleted via the admin panel. Suspended users lose access immediately. Documents created by a departed user remain in the team library — ownership is transferred to the admin. For SSO organisations, revoking access in Entra ID automatically terminates Structa access at the next session check.',
+    content: 'User accounts can be suspended or deleted via the admin panel. Suspended users lose access immediately. Documents created by a departed user remain in the team library — ownership is transferred to the admin. For SSO organisations, revoking access in Entra ID automatically terminates Commonplace access at the next session check.',
   },
 ];
 
@@ -72,7 +72,7 @@ export default function SecurityPage() {
             Enterprise-grade security for regulated industries
           </h1>
           <p style={{ fontSize: 'var(--text-large)', color: 'var(--text-secondary)', lineHeight: 1.5, margin: '0 auto 2.5rem', maxWidth: 560 }}>
-            Structa is built to meet the security and compliance requirements of industries where documentation errors have real consequences.
+            Commonplace is built to meet the security and compliance requirements of industries where documentation errors have real consequences.
           </p>
           <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
             <BtnPrimary onClick={openDemo}>Request a demo</BtnPrimary>
@@ -133,7 +133,7 @@ export default function SecurityPage() {
                 Access control you can trust
               </h2>
               <p style={{ fontSize: 'var(--text-medium)', color: 'rgba(255,255,255,0.75)', lineHeight: 1.6, margin: '0 0 2rem' }}>
-                Connect Structa to Microsoft Entra ID and your existing security policies apply automatically. SSO, MFA, and conditional access — no separate configuration required.
+                Connect Commonplace to Microsoft Entra ID and your existing security policies apply automatically. SSO, MFA, and conditional access — no separate configuration required.
               </p>
               <div style={{ display: 'grid', gap: '0.9rem', marginBottom: '2.5rem' }}>
                 {[
@@ -193,7 +193,7 @@ export default function SecurityPage() {
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.5rem' }}>
             {[
-              { num: '01', title: 'You own your content', desc: 'Everything you create in Structa belongs to you. We do not claim any rights over your source notes, generated documents, or any derivative content.' },
+              { num: '01', title: 'You own your content', desc: 'Everything you create in Commonplace belongs to you. We do not claim any rights over your source notes, generated documents, or any derivative content.' },
               { num: '02', title: 'Delete means delete', desc: 'When you delete a document or account, data is removed from all systems within 30 days. No shadow copies, no backup retention beyond that window.' },
               { num: '03', title: 'Portability guaranteed', desc: 'You can export your entire document library at any time, in standard formats. No lock-in, no data held hostage.' },
             ].map(p => (
@@ -256,7 +256,7 @@ export default function SecurityPage() {
             <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, rgba(0,40,90,0.88) 0%, rgba(0,20,50,0.75) 100%)' }} />
             <div style={{ position: 'relative', padding: 'clamp(3.5rem,6vw,5rem)', maxWidth: 620 }}>
               <h2 style={{ fontFamily: 'var(--font-heading)', fontWeight: 500, fontSize: 'var(--text-h2)', lineHeight: 1.15, letterSpacing: '-0.015em', color: '#fff', margin: '0 0 1.25rem' }}>
-                Ready to see Structa in your environment?
+                Ready to see Commonplace in your environment?
               </h2>
               <p style={{ fontSize: 'var(--text-medium)', color: 'rgba(255,255,255,0.82)', lineHeight: 1.6, margin: '0 0 2.5rem' }}>
                 Our team can walk through our security architecture, answer IT and compliance questions, and provide documentation for your review.

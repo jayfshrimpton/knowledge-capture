@@ -12,7 +12,7 @@ import { supabase } from './supabase';
 
 export type AuthProvider = 'entra' | 'supabase';
 
-const PROVIDER_KEY = 'structa.activeAuthProvider';
+const PROVIDER_KEY = 'commonplace.activeAuthProvider';
 
 /** Record the provider the user most recently signed in with (tiebreak hint). */
 export function setActiveProvider(provider: AuthProvider): void {

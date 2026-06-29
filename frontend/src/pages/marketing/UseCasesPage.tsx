@@ -58,7 +58,7 @@ they've got 45 users, mix of ops managers and field supervisors. main pain point
       title: 'Acme Corp — Onboarding Discovery Call',
       date: '25 June 2026',
       sections: [
-        { heading: 'Attendees', body: 'Sarah (Operations Lead), Tom (Technical Contact), Structa team.' },
+        { heading: 'Attendees', body: 'Sarah (Operations Lead), Tom (Technical Contact), Commonplace team.' },
         { heading: 'Organisation profile', body: '45 users — operations managers and field supervisors. Primary use case: procedures and checklists. Current state: Word templates with low adoption.' },
         { heading: 'Key pain point', body: 'Inconsistent documentation quality across authors. Templates exist but are not followed.' },
         { heading: 'Compliance driver', body: 'ISO 9001 audit due March 2027. Timing creates urgency for rollout.' },
@@ -156,7 +156,7 @@ export default function UseCasesPage() {
             Built for every operational environment
           </h1>
           <p style={{ fontSize: 'var(--text-large)', color: 'var(--text-secondary)', lineHeight: 1.5, margin: '0 auto 2.5rem', maxWidth: 540 }}>
-            From construction sites to healthcare admin, Structa converts field notes into compliant documentation — wherever your team works.
+            From construction sites to healthcare admin, Commonplace converts field notes into compliant documentation — wherever your team works.
           </p>
           <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
             <BtnPrimary onClick={openDemo}>Request a demo</BtnPrimary>
@@ -188,7 +188,7 @@ export default function UseCasesPage() {
             <div style={{ background: 'var(--accent)', borderRadius: 'var(--radius-card)', padding: '1.75rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: 200 }}>
               <div>
                 <h3 style={{ fontFamily: 'var(--font-heading)', fontWeight: 500, fontSize: '1.25rem', color: '#fff', margin: '0 0 0.75rem' }}>Don't see your industry?</h3>
-                <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.9rem', lineHeight: 1.5, margin: 0 }}>Structa works wherever operational notes need to become structured documentation. Let's talk.</p>
+                <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.9rem', lineHeight: 1.5, margin: 0 }}>Commonplace works wherever operational notes need to become structured documentation. Let's talk.</p>
               </div>
               <button onClick={openDemo} style={{ display: 'inline-flex', alignItems: 'center', height: '2.25rem', padding: '0 1rem', borderRadius: 'var(--radius-button)', background: '#fff', color: 'var(--accent)', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.875rem', fontWeight: 700, marginTop: '1.5rem', alignSelf: 'flex-start' }}>
                 Talk to us
@@ -231,7 +231,7 @@ export default function UseCasesPage() {
         <div style={{ maxWidth: '80rem', margin: '0 auto', padding: '0 5%' }}>
           <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
             <h2 style={{ fontFamily: 'var(--font-heading)', fontWeight: 500, fontSize: 'var(--text-h2)', letterSpacing: '-0.015em', color: '#fff', margin: '0 0 1rem' }}>See it in your industry</h2>
-            <p style={{ fontSize: 'var(--text-medium)', color: 'rgba(255,255,255,0.7)', margin: 0 }}>Real examples from operations teams using Structa today.</p>
+            <p style={{ fontSize: 'var(--text-medium)', color: 'rgba(255,255,255,0.7)', margin: 0 }}>Real examples from operations teams using Commonplace today.</p>
           </div>
           {/* Industry tab strip */}
           <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center', flexWrap: 'wrap', marginBottom: '2.5rem' }}>
@@ -257,7 +257,7 @@ export default function UseCasesPage() {
             <div style={{ background: '#fff', borderRadius: 'var(--radius-card)', padding: '1.75rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.25rem' }}>
                 <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#22c55e' }} />
-                <span style={{ color: 'var(--text-secondary)', fontSize: '0.78rem', fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase' }}>Structa output</span>
+                <span style={{ color: 'var(--text-secondary)', fontSize: '0.78rem', fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase' }}>Commonplace output</span>
               </div>
               <div style={{ fontSize: '0.7rem', color: 'var(--accent)', fontWeight: 700, letterSpacing: '0.07em', marginBottom: '0.25rem' }}>{scenario.structuredOutput.type}</div>
               <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginBottom: '0.85rem' }}>{scenario.structuredOutput.ref} · {scenario.structuredOutput.date}</div>
@@ -284,7 +284,7 @@ export default function UseCasesPage() {
             />
             <blockquote style={{ margin: 0 }}>
               <p style={{ fontSize: 'var(--text-large)', lineHeight: 1.55, fontStyle: 'italic', color: 'var(--text-primary)', margin: '0 0 2rem' }}>
-                "We deal with safety-critical documentation every day. Structa gives us the confidence that nothing gets missed — every hazard, every control measure, every emergency procedure is captured and structured correctly, every time."
+                "We deal with safety-critical documentation every day. Commonplace gives us the confidence that nothing gets missed — every hazard, every control measure, every emergency procedure is captured and structured correctly, every time."
               </p>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.9rem' }}>
                 <Avatar name="Marcus Rodriguez" />
@@ -306,7 +306,7 @@ export default function UseCasesPage() {
             <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, rgba(0,40,90,0.88) 0%, rgba(0,20,50,0.75) 100%)' }} />
             <div style={{ position: 'relative', padding: 'clamp(3.5rem,6vw,5rem)', maxWidth: 620 }}>
               <h2 style={{ fontFamily: 'var(--font-heading)', fontWeight: 500, fontSize: 'var(--text-h2)', lineHeight: 1.15, letterSpacing: '-0.015em', color: '#fff', margin: '0 0 1.25rem' }}>
-                Ready to see Structa at work in your operation?
+                Ready to see Commonplace at work in your operation?
               </h2>
               <p style={{ fontSize: 'var(--text-medium)', color: 'rgba(255,255,255,0.82)', lineHeight: 1.6, margin: '0 0 2.5rem' }}>
                 Book a 30-minute walkthrough and bring your own notes. We'll convert them live.

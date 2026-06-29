@@ -1,9 +1,10 @@
-# Knowledge Capture Tool — MVP
+# Commonplace — MVP
 
-Captures rough notes, brain dumps, and unstructured text from engineering and
-construction staff, and converts them into structured documentation
-(procedures, checklists, reference docs, or system diagrams) using the Google
-Gemini API.
+Pulls knowledge out of people's heads and structures it. Captures rough notes,
+brain dumps, and unstructured text and converts them into structured
+documentation (procedures, checklists, reference docs, or system diagrams)
+using the Google Gemini API. Integrates with wherever the team already works
+(SharePoint, Confluence, Drive).
 
 ## Architecture
 

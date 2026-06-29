@@ -101,7 +101,7 @@ const inputMethods = [
   { icon: 'content_paste', label: 'Pasted text', desc: 'Copy and paste from emails, reports, or any digital source.' },
   { icon: 'edit_note', label: 'Typed notes', desc: 'Write directly in the editor — shorthand, bullets, whatever you have.' },
   { icon: 'mail', label: 'Emails & reports', desc: 'Paste email threads or existing documents to restructure and standardise.' },
-  { icon: 'psychology', label: 'Brain dumps', desc: 'Unstructured thoughts become organised procedures. Structa finds the logic.' },
+  { icon: 'psychology', label: 'Brain dumps', desc: 'Unstructured thoughts become organised procedures. Commonplace finds the logic.' },
 ];
 
 export default function HowItWorksPage() {
@@ -178,7 +178,7 @@ gauges all normal, p2 bearing a bit loud but ran ok, asked mech to have a look. 
             },
             {
               step: '02',
-              title: 'Structa structures it',
+              title: 'Commonplace structures it',
               desc: 'The AI identifies the operational context, extracts key information, and applies your compliance framework.',
               content: (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
@@ -242,7 +242,7 @@ gauges all normal, p2 bearing a bit loud but ran ok, asked mech to have a look. 
               Before and after
             </h2>
             <p style={{ fontSize: 'var(--text-medium)', color: 'rgba(255,255,255,0.7)', margin: 0 }}>
-              The same pump room handover — as notes, and as a Structa document.
+              The same pump room handover — as notes, and as a Commonplace document.
             </p>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
@@ -257,7 +257,7 @@ gauges all normal, p2 bearing a bit loud but ran ok, asked mech to have a look. 
             <div style={{ background: '#fff', borderRadius: 'var(--radius-card)', padding: '1.75rem' }}>
               <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginBottom: '1.25rem' }}>
                 <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#22c55e' }} />
-                <span style={{ color: 'var(--text-secondary)', fontSize: '0.82rem', fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase' }}>After — Structa document</span>
+                <span style={{ color: 'var(--text-secondary)', fontSize: '0.82rem', fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase' }}>After — Commonplace document</span>
               </div>
               <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '0.07em', marginBottom: '0.35rem' }}>OPERATING PROCEDURE · OP-ENG-042</div>
               <h3 style={{ fontFamily: 'var(--font-heading)', fontWeight: 500, fontSize: '1.05rem', margin: '0 0 1rem' }}>Pump Room Handover — Morning Shift</h3>
@@ -285,7 +285,7 @@ gauges all normal, p2 bearing a bit loud but ran ok, asked mech to have a look. 
               Every document type you need
             </h2>
             <p style={{ fontSize: 'var(--text-medium)', color: 'var(--text-secondary)', margin: 0 }}>
-              Structa selects the right format or you choose — either way, the output is ready to use.
+              Commonplace selects the right format or you choose — either way, the output is ready to use.
             </p>
           </div>
           {/* Tab strip */}
@@ -396,7 +396,7 @@ gauges all normal, p2 bearing a bit loud but ran ok, asked mech to have a look. 
             <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, rgba(0,40,90,0.88) 0%, rgba(0,20,50,0.75) 100%)' }} />
             <div style={{ position: 'relative', padding: 'clamp(3.5rem,6vw,5rem)', maxWidth: 620 }}>
               <h2 style={{ fontFamily: 'var(--font-heading)', fontWeight: 500, fontSize: 'var(--text-h2)', lineHeight: 1.15, letterSpacing: '-0.015em', color: '#fff', margin: '0 0 1.25rem' }}>
-                Ready to see Structa convert your notes?
+                Ready to see Commonplace convert your notes?
               </h2>
               <p style={{ fontSize: 'var(--text-medium)', color: 'rgba(255,255,255,0.82)', lineHeight: 1.6, margin: '0 0 2.5rem' }}>
                 Book a 30-minute walkthrough and bring your own notes. We'll convert them live.

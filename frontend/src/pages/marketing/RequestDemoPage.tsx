@@ -11,7 +11,7 @@ const faqItems = [
   { q: 'Do I need to prepare anything?', a: "Just bring a real example of the kind of notes your team produces — a shift handover, a site report, a meeting note, anything. The messier the better. We'll convert it live." },
   { q: 'Who should attend?', a: "Whoever owns the documentation problem. That's usually an operations manager, quality lead, or HSE manager. If you want a technical member of your IT team to attend for the security and SSO conversation, that works well too." },
   { q: 'Is there a free trial after the demo?', a: "Yes — every plan starts with a 14-day free trial. After the demo, we'll set up your trial environment and can pre-load your custom templates if you have them." },
-  { q: 'How quickly do you respond?', a: "We aim to respond within one business day. For urgent requirements or large team deployments, contact us directly at sales@structa.io and we'll prioritise your request." },
+  { q: 'How quickly do you respond?', a: "We aim to respond within one business day. For urgent requirements or large team deployments, contact us directly at sales@commonplace.app and we'll prioritise your request." },
 ];
 
 function DemoFaq({ items }: { items: { q: string; a: string }[] }) {
@@ -71,10 +71,10 @@ export default function RequestDemoPage() {
                 Request a demo
               </span>
               <h1 style={{ fontFamily: 'var(--font-heading)', fontWeight: 500, fontSize: 'var(--text-h2)', lineHeight: 1.15, letterSpacing: '-0.015em', margin: '0 0 1.25rem' }}>
-                See Structa convert your notes live
+                See Commonplace convert your notes live
               </h1>
               <p style={{ fontSize: 'var(--text-medium)', color: 'var(--text-secondary)', lineHeight: 1.6, margin: '0 0 2.5rem' }}>
-                In 30 minutes, you'll see exactly what Structa produces from the kind of notes your team actually writes — and we'll walk through the security, compliance, and rollout questions together.
+                In 30 minutes, you'll see exactly what Commonplace produces from the kind of notes your team actually writes — and we'll walk through the security, compliance, and rollout questions together.
               </p>
 
               {/* What to expect steps */}
@@ -89,7 +89,7 @@ export default function RequestDemoPage() {
                   {
                     num: '02',
                     title: 'Watch the conversion',
-                    desc: "We'll convert your notes live, in the demo. You'll see exactly how Structa structures your specific type of content.",
+                    desc: "We'll convert your notes live, in the demo. You'll see exactly how Commonplace structures your specific type of content.",
                     icon: 'auto_awesome',
                   },
                   {

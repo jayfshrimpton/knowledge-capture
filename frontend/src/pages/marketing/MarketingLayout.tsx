@@ -266,7 +266,7 @@ function DemoModal({ onClose }: { onClose: () => void }) {
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '1rem' }}>
           <div>
             <h3 style={{ fontFamily: 'var(--font-heading)', fontWeight: 500, fontSize: 'var(--text-h5)', margin: 0 }}>Request a demo</h3>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', margin: '0.4rem 0 0' }}>See Structa convert your notes in a 30-minute walkthrough.</p>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', margin: '0.4rem 0 0' }}>See Commonplace convert your notes in a 30-minute walkthrough.</p>
           </div>
           <button
             onClick={onClose}
@@ -354,8 +354,8 @@ function MarketingNav({ openDemo }: { openDemo: () => void }) {
         justifyContent: 'space-between', gap: '1.5rem',
       }}>
         <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '0.55rem', textDecoration: 'none', color: 'var(--text-primary)' }}>
-          <img src="/assets/structa-light.svg" alt="Structa" height={26} />
-          <span style={{ fontFamily: 'var(--font-heading)', fontWeight: 600, fontSize: '1.35rem', letterSpacing: '-0.02em' }}>Structa</span>
+          <img src="/assets/commonplace-light.svg" alt="Commonplace" height={26} />
+          <span style={{ fontFamily: 'var(--font-heading)', fontWeight: 600, fontSize: '1.35rem', letterSpacing: '-0.02em' }}>Commonplace</span>
         </Link>
 
         <nav style={{ display: 'flex', alignItems: 'center', gap: '2.25rem' }}>
@@ -431,8 +431,8 @@ function MarketingFooter() {
         <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr 1fr 1fr 1.4fr', gap: '2.5rem' }}>
           <div>
             <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', textDecoration: 'none', color: '#fff' }}>
-              <img src="/assets/structa-dark.svg" alt="Structa" height={26} />
-              <span style={{ fontFamily: 'var(--font-heading)', fontWeight: 600, fontSize: '1.3rem', letterSpacing: '-0.02em' }}>Structa</span>
+              <img src="/assets/commonplace-dark.svg" alt="Commonplace" height={26} />
+              <span style={{ fontFamily: 'var(--font-heading)', fontWeight: 600, fontSize: '1.3rem', letterSpacing: '-0.02em' }}>Commonplace</span>
             </Link>
           </div>
 
@@ -499,7 +499,7 @@ function MarketingFooter() {
 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1.5rem', fontSize: '0.85rem', color: 'rgba(255,255,255,0.55)' }}>
-            <span>&copy; 2026 Structa. All rights reserved.</span>
+            <span>&copy; 2026 Commonplace. All rights reserved.</span>
             <a href="#" style={{ color: 'rgba(255,255,255,0.55)', textDecoration: 'none' }}>Privacy policy</a>
             <a href="#" style={{ color: 'rgba(255,255,255,0.55)', textDecoration: 'none' }}>Terms of service</a>
             <a href="#" style={{ color: 'rgba(255,255,255,0.55)', textDecoration: 'none' }}>Cookies settings</a>

@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 /* ============================================================
-   Structa — webfonts (served locally from /public/fonts)
+   Commonplace — webfonts (served locally from /public/fonts)
    ============================================================ */
 @font-face {
   font-family: "Inter";
@@ -63,7 +63,7 @@
 }
 
 /* ============================================================
-   Structa — design tokens
+   Commonplace — design tokens
    ============================================================ */
 :root {
   /* Neutral scale */

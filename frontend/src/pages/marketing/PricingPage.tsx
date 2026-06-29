@@ -222,7 +222,7 @@ export default function PricingPage() {
                 Start your free trial today
               </h2>
               <p style={{ fontSize: 'var(--text-medium)', color: 'rgba(255,255,255,0.82)', lineHeight: 1.6, margin: '0 auto 2.5rem', maxWidth: 440 }}>
-                14 days, full access, no card required. See Structa convert your notes live.
+                14 days, full access, no card required. See Commonplace convert your notes live.
               </p>
               <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
                 <BtnAlternate onClick={openDemo}>Request a demo</BtnAlternate>

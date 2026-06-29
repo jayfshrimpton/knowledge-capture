@@ -25,7 +25,7 @@ export async function createTestFixtures(): Promise<TestFixtures> {
     id: userId,
     org_id: orgId,
     name: 'Test User',
-    email: `test+${userId}@structa-test.invalid`,
+    email: `test+${userId}@commonplace-test.invalid`,
     role: 'admin',
     auth_provider: 'supabase',
   });

@@ -124,9 +124,9 @@ function drawPageDecorations(
     .lineWidth(0.5)
     .stroke();
 
-  // Header left: "Lore" logotype
+  // Header left: "Commonplace" logotype
   pdf.font('Helvetica-Bold').fontSize(11).fillColor(COLOUR.navy)
-    .text('Lore', MARGIN.left, HEADER_Y, { lineBreak: false });
+    .text('Commonplace', MARGIN.left, HEADER_Y, { lineBreak: false });
 
   // Header right: document title
   pdf.font('Helvetica').fontSize(9).fillColor(COLOUR.slate)

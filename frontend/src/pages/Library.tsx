@@ -34,7 +34,7 @@ export default function Library() {
       .finally(() => setLoadingDoc(false));
   }, [id]);
 
-  const isOnboarded = localStorage.getItem('lore_onboarded') !== null;
+  const isOnboarded = localStorage.getItem('commonplace_onboarded') !== null;
 
   if (!loadingList && items.length === 0 && !isOnboarded) {
     return (
@@ -49,7 +49,7 @@ export default function Library() {
             marginBottom: '0.75rem',
           }}
         >
-          Welcome to Lore
+          Welcome to Commonplace
         </h1>
         <p
           style={{
@@ -64,7 +64,7 @@ export default function Library() {
         <div style={{ marginBottom: '0.5rem' }}>
           {[
             'Paste your notes or upload a file',
-            'Lore structures it automatically',
+            'Commonplace structures it automatically',
             'Export or save to your library',
           ].map((step, i) => (
             <div

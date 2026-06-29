@@ -205,7 +205,7 @@ function PricingTable({ onUpgrade, upgrading }: PricingTableProps) {
       </div>
 
       <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginTop: '1rem', textAlign: 'center' }}>
-        Need more than 50 users? <a href="mailto:sales@structa.app" style={{ color: 'var(--accent)', textDecoration: 'none' }}>Contact us</a> for Enterprise pricing.
+        Need more than 50 users? <a href="mailto:sales@commonplace.app" style={{ color: 'var(--accent)', textDecoration: 'none' }}>Contact us</a> for Enterprise pricing.
       </p>
     </div>
   );

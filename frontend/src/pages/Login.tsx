@@ -161,7 +161,7 @@ export default function Login() {
               letterSpacing: '-0.01em',
             }}
           >
-            Structa
+            Commonplace
           </h1>
           <p style={{ marginTop: '0.375rem', fontSize: '0.9375rem', color: 'var(--text-muted)' }}>
             {mode === 'signup' ? 'Create your account' : 'Sign in to your account'}

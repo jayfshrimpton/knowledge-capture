@@ -10,12 +10,12 @@ const MS = (icon: string) =>
 
 const faqItems = [
   {
-    title: 'How does Structa integrate with existing systems?',
-    content: 'Structa works alongside your existing tools — paste in notes, emails, or reports, and receive structured documents in seconds. For team deployments, we support Microsoft 365 integration and single sign-on via Microsoft Entra ID, so your team can work within familiar workflows without any additional infrastructure.',
+    title: 'How does Commonplace integrate with existing systems?',
+    content: 'Commonplace works alongside your existing tools — paste in notes, emails, or reports, and receive structured documents in seconds. For team deployments, we support Microsoft 365 integration and single sign-on via Microsoft Entra ID, so your team can work within familiar workflows without any additional infrastructure.',
   },
   {
     title: 'What happens to our data?',
-    content: 'Your data stays in your chosen Azure region and is never used to train AI models. Structa processes each conversion in an isolated, ephemeral environment and retains no copies of your source notes or generated documents after the session ends. Enterprise customers can elect to store audit logs and version history in their own Azure subscription.',
+    content: 'Your data stays in your chosen Azure region and is never used to train AI models. Commonplace processes each conversion in an isolated, ephemeral environment and retains no copies of your source notes or generated documents after the session ends. Enterprise customers can elect to store audit logs and version history in their own Azure subscription.',
   },
   {
     title: 'How long does conversion take?',
@@ -27,13 +27,13 @@ const faqItems = [
   },
   {
     title: 'What about compliance and regulatory requirements?',
-    content: 'Structa is built to meet the documentation standards required in regulated industries. We support audit trails, version control, and approval workflows that satisfy ISO 9001, ISO 45001, and industry-specific frameworks. Our security and compliance certifications include SOC 2 Type II and GDPR compliance, with HIPAA support available on Enterprise plans.',
+    content: 'Commonplace is built to meet the documentation standards required in regulated industries. We support audit trails, version control, and approval workflows that satisfy ISO 9001, ISO 45001, and industry-specific frameworks. Our security and compliance certifications include SOC 2 Type II and GDPR compliance, with HIPAA support available on Enterprise plans.',
   },
 ];
 
 const testimonials = [
   {
-    quote: "Structa has completely transformed how we handle handover documentation. What used to take an hour of post-shift admin is now done in two minutes. Our compliance audits have gone from stressful to straightforward.",
+    quote: "Commonplace has completely transformed how we handle handover documentation. What used to take an hour of post-shift admin is now done in two minutes. Our compliance audits have gone from stressful to straightforward.",
     name: 'James Mitchell',
     role: 'Operations Director',
     org: 'Industrial Engineering Co.',
@@ -45,7 +45,7 @@ const testimonials = [
     org: 'Precision Manufacturing Ltd.',
   },
   {
-    quote: "We deal with safety-critical documentation every day. Structa gives us the confidence that nothing gets missed — every hazard, every control measure, every emergency procedure is captured and structured correctly, every time.",
+    quote: "We deal with safety-critical documentation every day. Commonplace gives us the confidence that nothing gets missed — every hazard, every control measure, every emergency procedure is captured and structured correctly, every time.",
     name: 'Marcus Rodriguez',
     role: 'HSE Manager',
     org: 'Energy & Resources Plc.',
@@ -109,7 +109,7 @@ export default function HomePage() {
               Turn rough notes into structured documentation
             </h1>
             <p style={{ fontSize: 'var(--text-large)', color: 'rgba(255,255,255,0.82)', lineHeight: 1.5, margin: '0 0 2.5rem', maxWidth: 540 }}>
-              Structa converts field notes, emails, and brain dumps into compliant procedures, checklists, and reference documents — in seconds.
+              Commonplace converts field notes, emails, and brain dumps into compliant procedures, checklists, and reference documents — in seconds.
             </p>
             <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
               <BtnAlternate onClick={openDemo}>Request a demo</BtnAlternate>
@@ -136,7 +136,7 @@ export default function HomePage() {
                 From raw notes to ready documents
               </h2>
               <p style={{ fontSize: 'var(--text-medium)', color: 'var(--text-secondary)', lineHeight: 1.6, margin: '0 0 2rem' }}>
-                Paste in whatever you have — shorthand, bullet points, voice transcript. Structa understands the operational context and produces a document that meets your compliance standards, first time.
+                Paste in whatever you have — shorthand, bullet points, voice transcript. Commonplace understands the operational context and produces a document that meets your compliance standards, first time.
               </p>
               <div style={{ display: 'grid', gap: '1.1rem', marginBottom: '2.5rem' }}>
                 {[
@@ -175,7 +175,7 @@ export default function HomePage() {
               Built for enterprise operations
             </h2>
             <p style={{ fontSize: 'var(--text-medium)', color: 'var(--text-secondary)', maxWidth: 520, margin: '0 auto' }}>
-              Structa meets the security, compliance, and scalability demands of industrial and regulated environments.
+              Commonplace meets the security, compliance, and scalability demands of industrial and regulated environments.
             </p>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.25rem' }}>
@@ -204,7 +204,7 @@ export default function HomePage() {
                 Real impact
               </span>
               <h2 style={{ fontFamily: 'var(--font-heading)', fontWeight: 500, fontSize: 'var(--text-h2)', lineHeight: 1.15, letterSpacing: '-0.015em', margin: '0 0 1.25rem' }}>
-                What Structa does for your team
+                What Commonplace does for your team
               </h2>
               <p style={{ fontSize: 'var(--text-medium)', color: 'var(--text-secondary)', lineHeight: 1.6, margin: 0 }}>
                 The impact goes beyond faster documents. When documentation quality is consistent and effortless, the whole operation improves.
@@ -233,7 +233,7 @@ export default function HomePage() {
               Four document types, one tool
             </h2>
             <p style={{ fontSize: 'var(--text-medium)', color: 'var(--text-secondary)', maxWidth: 520, margin: '0 auto' }}>
-              Structa intelligently selects the right output format for your content, or you choose — procedures, checklists, reference documents, and process diagrams.
+              Commonplace intelligently selects the right output format for your content, or you choose — procedures, checklists, reference documents, and process diagrams.
             </p>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.1rem' }}>
@@ -311,7 +311,7 @@ export default function HomePage() {
                 Frequently asked questions
               </h2>
               <p style={{ fontSize: 'var(--text-medium)', color: 'var(--text-secondary)', lineHeight: 1.6, margin: '0 0 2.5rem' }}>
-                Everything you need to know about getting Structa into your operation.
+                Everything you need to know about getting Commonplace into your operation.
               </p>
               <BtnPrimary onClick={openDemo}>Speak with our team</BtnPrimary>
             </div>
@@ -332,7 +332,7 @@ export default function HomePage() {
             <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, rgba(0,40,90,0.88) 0%, rgba(0,20,50,0.75) 100%)' }} />
             <div style={{ position: 'relative', padding: 'clamp(3.5rem,6vw,5rem)', maxWidth: 620 }}>
               <h2 style={{ fontFamily: 'var(--font-heading)', fontWeight: 500, fontSize: 'var(--text-h2)', lineHeight: 1.15, letterSpacing: '-0.015em', color: '#fff', margin: '0 0 1.25rem' }}>
-                Ready to see Structa convert your notes?
+                Ready to see Commonplace convert your notes?
               </h2>
               <p style={{ fontSize: 'var(--text-medium)', color: 'rgba(255,255,255,0.82)', lineHeight: 1.6, margin: '0 0 2.5rem' }}>
                 Book a 30-minute walkthrough and bring your own notes. We'll convert them live.

@@ -21,7 +21,7 @@ const EXAMPLE_CARDS = [
 
 export default function Capture() {
   const [isOnboarded, setIsOnboarded] = useState(
-    () => localStorage.getItem('lore_onboarded') !== null
+    () => localStorage.getItem('commonplace_onboarded') !== null
   );
   const [showCelebration, setShowCelebration] = useState(false);
   const [prefill, setPrefill] = useState<{ title: string; notes: string; key: number } | null>(null);
@@ -32,7 +32,7 @@ export default function Capture() {
     setCurrent(doc);
     setSessionDocs((prev) => [doc, ...prev]);
     if (!isOnboarded) {
-      localStorage.setItem('lore_onboarded', 'true');
+      localStorage.setItem('commonplace_onboarded', 'true');
       setIsOnboarded(true);
       setShowCelebration(true);
     }
