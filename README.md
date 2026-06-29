@@ -1,160 +1,183 @@
-# Commonplace
+# Commonplace — Developer Reference
 
-Pulls knowledge out of people's heads and structures it. Captures rough notes,
-brain dumps, and unstructured text and converts them into structured
-documentation (procedures, checklists, reference docs, or system diagrams)
-using the Google Gemini API. Integrates with wherever the team already works
-(SharePoint, Confluence, Drive).
+Internal reference for developers working on the Commonplace codebase.
+This is a private commercial SaaS product — the repo is not intended for
+self-hosting or public deployment.
 
-## Architecture
+## Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Frontend | React 18 + Vite + TypeScript + Tailwind |
+| Backend | Node.js + Express + TypeScript |
+| Database | Supabase (Postgres + Storage + Auth) |
+| Auth | Microsoft Entra External ID (MSAL) **or** Supabase email/password |
+| AI | Google Gemini (`gemini-2.5-flash-lite`) |
+| Search | pgvector (Supabase extension) |
+| Billing | Stripe (scaffolded) |
+| Frontend hosting | Vercel |
+| Backend hosting | Render / Railway |
+
+## Codebase map
 
 ```
-knowledge-capture/
-├── frontend/   React + Vite + Tailwind SPA
-├── backend/    Node.js + Express + TypeScript API
-└── supabase/   Postgres schema + migrations
+commonplace/
+├── frontend/
+│   ├── src/
+│   │   ├── pages/          Route-level views (Login, Capture, Library, Dashboard, …)
+│   │   ├── components/     Shared UI + AuthProvider (auth context)
+│   │   ├── lib/            api.ts, session.ts, msal.ts, supabase.ts
+│   │   └── hooks/          Custom React hooks
+│   └── .env.example
+├── backend/
+│   ├── src/
+│   │   ├── middleware/     auth.ts — JWT validation for both providers
+│   │   ├── routes/         One file per resource (capture, documents, search, …)
+│   │   └── lib/            Gemini client, Supabase admin client, embeddings helper
+│   └── .env.example
+└── supabase/
+    └── migrations/         001 → 011 — run in order on any new environment
 ```
 
-- **Authentication:** Dual-provider — Microsoft Entra External ID (MSAL) for M365
-  work/school accounts, **or** Supabase email/password for everyone else. Each user
-  signs up through one provider and stays with it; JWTs from both are validated by
-  the same backend middleware.
-- **Database + file storage:** Supabase (Postgres + Storage)
-- **AI structuring:** Google Gemini (`gemini-2.5-flash-lite`)
-- **File parsing:** `mammoth` (.docx), `pdf-parse` (.pdf), plain read (.txt)
-- **Exports:** `docx` (Word), `pdfkit` (PDF)
+## Auth architecture
 
-> Note: PDF export uses `pdfkit` (pure JS, no headless Chromium) rather than
-> puppeteer/@react-pdf — simpler with no headless-browser dependency.
+Two identity providers operate in parallel. A user signs up through one and
+stays with it — there is no account linking between providers.
 
-## Prerequisites
+| Provider | Audience | Token issuer |
+|----------|----------|-------------|
+| Microsoft Entra External ID | M365 work/school accounts | `login.microsoftonline.com/<tenant-id>` |
+| Supabase Auth (email/password) | Everyone else | `<supabase-url>/auth/v1` |
+
+**Backend** (`backend/src/middleware/auth.ts`): the middleware reads the `iss`
+claim from the incoming JWT (unverified), routes to the correct JWKS endpoint,
+verifies the signature (RS256 / ES256 — asymmetric only, no shared secrets),
+then fetches the user's `org_id` from the database. The three middleware exports:
+
+- `requireUser` — validates token, does not require org membership (bootstrap + `/api/me`)
+- `requireAuth` — validates token + requires an onboarded org; enforces guest-access expiry
+- `requireRole('admin')` — layered on top of `requireAuth` for admin-only routes
+
+**Frontend** (`frontend/src/lib/session.ts`): `resolveActiveProvider()` reads the
+last-used provider from localStorage and `getAccessToken()` acquires a token from
+it (MSAL silent acquisition for Entra, Supabase session auto-refresh for
+email/password). All API calls go through `frontend/src/lib/api.ts` which attaches
+the token via `authHeader()`.
+
+## Data model
+
+RLS is disabled. The backend enforces `org_id` scoping on every query using
+the Supabase service-role key.
+
+| Table | Purpose |
+|-------|---------|
+| `orgs` | One row per organisation |
+| `users` | One row per user; `auth_provider` column records `'entra'` or `'supabase'` |
+| `documents` | Captured notes + structured output; versioned |
+| `document_embeddings` | pgvector embeddings for semantic search (migration 009) |
+| `departments` | RBAC departments; documents can be scoped to a department |
+| `invites` | Org invite tokens |
+| `ai_credits` | Per-org Gemini credit accounting |
+| `billing_*` | Stripe billing scaffolding (migration 006) |
+
+Migrations live in `supabase/migrations/` (`001_initial_schema` → `011_search_logs`).
+Run all in order. Key ones: `008` enables dual-auth, `009` adds pgvector for search,
+`010` adds RBAC.
+
+## Local development
+
+### Prerequisites
 
 - Node.js 18+
-- A Supabase project (database, file storage, and email/password auth)
-- A Microsoft Entra External ID tenant with an app registration
-- A Google Gemini API key (https://aistudio.google.com/apikey)
+- Credentials for the dev Supabase project and Azure app registration
+  (copy `.env.example` to `.env` and fill in values — see env var reference below)
 
-## 1. Microsoft Entra External ID setup
-
-1. In the [Azure Portal](https://portal.azure.com), go to **Microsoft Entra ID →
-   App registrations → New registration**.
-2. Set the redirect URI to `http://localhost:5173/auth/callback` (type: SPA).
-   Add your production frontend URL as a second redirect URI when you deploy.
-3. Under **Authentication**, ensure **"ID tokens"** and **"Access tokens"** are
-   checked under Implicit grant (or leave unchecked if using auth code + PKCE,
-   which MSAL handles automatically for SPAs).
-4. Note the **Application (client) ID** and **Directory (tenant) ID** from the
-   Overview page — you will need both for the env vars below.
-
-## 2. Supabase setup
-
-1. Create a project at https://supabase.com.
-2. **Enable email auth:** Dashboard → **Authentication → Providers → Email** — ensure
-   it is enabled.
-3. **Use asymmetric JWT signing:** Dashboard → **Project Settings → Auth → JWT** —
-   set the signing algorithm to **RS256** (the backend validates Supabase tokens via
-   the JWKS endpoint, which requires asymmetric keys).
-4. Run all migrations in order (`001` → `011`) using the SQL editor or Supabase CLI.
-   Key ones: `001` (schema + storage), `007` (removes legacy Supabase-Auth-only RLS),
-   `008` (adds `auth_provider` column for dual-auth), `009` (pgvector/embeddings for
-   RAG search), `010` (RBAC).
-5. From **Project Settings → API Keys** copy:
-   - **Project URL** — used by both backend and frontend
-   - **Secret key** (`sb_secret_...`) — backend only, never ship to browser
-   - **Publishable key** — frontend Supabase client (auth + storage)
-
-## 3. Backend
+### Run
 
 ```bash
-cd backend
-cp .env.example .env      # then fill in the values
-npm install
-npm run dev               # http://localhost:3001
+# Backend
+cd backend && npm install && npm run dev    # → http://localhost:3001
+
+# Frontend (separate terminal)
+cd frontend && npm install && npm run dev   # → http://localhost:5173
 ```
 
-`.env` values:
-
-| Variable | Where to find it |
-|---|---|
-| `GEMINI_API_KEY` | Google AI Studio |
-| `SUPABASE_URL` | Supabase → Project Settings → API Keys → Project URL |
-| `SUPABASE_SECRET_KEY` | Supabase → API Keys → secret key (`sb_secret_...`; server only — never ship to the browser) |
-| `AZURE_TENANT_ID` | Azure Portal → App registrations → your app → Overview → Directory (tenant) ID |
-| `AZURE_CLIENT_ID` | Azure Portal → App registrations → your app → Overview → Application (client) ID |
-| `PORT` | defaults to `3001` |
-| `CORS_ORIGINS` | comma-separated allowed origins, e.g. `http://localhost:5173` |
-
-Health check: `GET http://localhost:3001/health`.
-
-## 4. Frontend
+### Tests
 
 ```bash
-cd frontend
-cp .env.example .env      # then fill in the values
-npm install
-npm run dev               # http://localhost:5173
+cd backend && npm test
 ```
 
-`.env` values:
+Integration tests hit a real Supabase instance. Gemini calls and auth
+middleware are mocked — do not mock the database.
 
-| Variable | Where to find it |
-|---|---|
-| `VITE_AZURE_TENANT_ID` | Azure Portal → App registrations → your app → Overview → Directory (tenant) ID |
-| `VITE_AZURE_CLIENT_ID` | Azure Portal → App registrations → your app → Overview → Application (client) ID |
-| `VITE_API_URL` | Backend base URL, e.g. `http://localhost:3001` |
-| `VITE_SUPABASE_URL` | Supabase → Project Settings → API Keys → Project URL (auth + storage) |
-| `VITE_SUPABASE_PUBLISHABLE_KEY` | Supabase → API Keys → publishable key (auth + storage) |
+## Environment variables
 
-## 5. First run
+### Backend (`backend/.env`)
 
-1. Open http://localhost:5173 and choose your sign-in method:
-   - **Sign in with Microsoft** — M365 work/school account (Entra).
-   - **Sign up / Sign in with email** — email + password (Supabase Auth).
-2. On first sign-in you'll be prompted to create your **organisation** (first user
-   becomes admin).
-3. On the **Capture** page, paste notes, upload a `.txt`/`.docx`/`.pdf`, or use
-   **Record** to transcribe audio via Gemini.
-4. The structured output appears with a format badge, a **Gaps & warnings** tab,
-   and a **Tags** tab. Export to Word or PDF.
-5. All captures are saved under **Library**, scoped to your org. Use **Search** for
-   semantic/RAG queries or Ask-a-question.
-6. **Gap Dashboard** surfaces knowledge gaps across the org. Departments and
-   visibility are managed under **Settings** (RBAC).
+| Variable | Purpose |
+|----------|---------|
+| `SUPABASE_URL` | Supabase project URL — used for DB access and to derive the Supabase JWKS endpoint |
+| `SUPABASE_SECRET_KEY` | Service-role key — unrestricted DB access; never expose to the browser |
+| `AZURE_TENANT_ID` | Entra tenant ID — constructs the Microsoft JWKS URL and validates the `iss` claim |
+| `AZURE_CLIENT_ID` | Entra app client ID — validated as the `aud` claim on Entra JWTs |
+| `GEMINI_API_KEY` | Google AI Studio key — used for document structuring and audio transcription |
+| `PORT` | Defaults to `3001` |
+| `CORS_ORIGINS` | Comma-separated allowed origins, e.g. `http://localhost:5173,https://app.commonplace.so` |
 
-## API endpoints
+### Frontend (`frontend/.env`)
 
-| Method | Path | Purpose |
-|---|---|---|
-| `GET` | `/health` | Health check (no auth) |
-| `GET` | `/api/me` | Current user + org (or `onboarded:false`) |
-| `POST` | `/api/bootstrap` | Create org + user row for a new signup |
-| `POST` | `/api/capture` | Structure notes via Gemini, persist, return the document |
-| `POST` | `/api/upload` | Extract text from an uploaded file |
-| `POST` | `/api/transcribe` | Transcribe audio via Gemini |
-| `GET` | `/api/documents` | List the org's documents |
-| `GET` | `/api/documents/:id` | Fetch one document |
-| `POST` | `/api/documents/:id/export` | Generate a Word or PDF export |
-| `POST` | `/api/search` | Semantic search (pgvector) |
-| `POST` | `/api/ask` | Ask-a-question (RAG) |
-| `GET` | `/api/gaps/*` | Gap dashboard (admin only) |
+| Variable | Purpose |
+|----------|---------|
+| `VITE_AZURE_TENANT_ID` | Entra tenant ID — MSAL uses this to target the correct authority URL |
+| `VITE_AZURE_CLIENT_ID` | Entra client ID — included in MSAL token requests |
+| `VITE_API_URL` | Backend base URL (`http://localhost:3001` locally, deployed URL in prod) |
+| `VITE_SUPABASE_URL` | Supabase project URL — used by supabase-js for email/password auth and storage |
+| `VITE_SUPABASE_PUBLISHABLE_KEY` | Supabase anon key — safe to expose; scoped to public-facing Supabase operations |
+| `VITE_STRIPE_PUBLISHABLE_KEY` | Stripe publishable key — for client-side Stripe.js (billing flow) |
 
-All `/api/*` routes except `/api/me` and `/api/bootstrap` require an onboarded
-user. Every route validates the `Authorization: Bearer` token against the issuing
-provider's JWKS endpoint — either Microsoft Entra or Supabase — and scopes data
-to the caller's `org_id`.
+## API routes
+
+All routes require `Authorization: Bearer <token>` (Entra or Supabase JWT) except where noted.
+
+| Method | Path | Auth | Purpose |
+|--------|------|------|---------|
+| `GET` | `/health` | None | Health check |
+| `GET` | `/api/me` | `requireUser` | Current user + org (returns `onboarded:false` if new) |
+| `POST` | `/api/bootstrap` | `requireUser` | Create org + user row on first sign-in |
+| `POST` | `/api/capture` | `requireAuth` | Structure notes via Gemini, persist document |
+| `POST` | `/api/upload` | `requireAuth` | Parse uploaded file (.txt/.docx/.pdf), return text |
+| `POST` | `/api/transcribe` | `requireAuth` | Transcribe audio via Gemini |
+| `GET` | `/api/documents` | `requireAuth` | List org's documents |
+| `GET` | `/api/documents/:id` | `requireAuth` | Fetch one document (with version history) |
+| `POST` | `/api/documents/:id/export` | `requireAuth` | Generate Word or PDF export |
+| `POST` | `/api/search` | `requireAuth` | Semantic search (pgvector) |
+| `POST` | `/api/ask` | `requireAuth` | Ask-a-question (RAG over org documents) |
+| `GET` | `/api/gaps/*` | `requireAuth` + admin | Gap dashboard — flagged gaps, search misses, coverage, activity |
+| `GET/POST` | `/api/departments` | `requireAuth` | RBAC department management |
+| `POST` | `/api/invites` | `requireAuth` | Org invite management |
+| `GET/POST` | `/api/billing/*` | `requireAuth` | Stripe billing (checkout, portal) |
 
 ## Deployment
 
-- **Frontend → Vercel:** set root to `frontend/`, build `npm run build`, output
-  `dist`. Add the `VITE_*` env vars. Point `VITE_API_URL` at the deployed backend.
-- **Backend → Render / Railway:** root `backend/`, build `npm install && npm run
-  build`, start `npm start`. Add all backend env vars and set `CORS_ORIGINS` to
-  the deployed frontend origin.
+### Frontend → Vercel
+Root directory: `frontend/`. Build command: `npm run build`. Output: `dist`.
+Set all `VITE_*` env vars in the Vercel project settings. `VITE_API_URL` must
+point to the deployed backend.
+
+### Backend → Render / Railway
+Root: `backend/`. Build: `npm install && npm run build`. Start: `npm start`.
+Set all backend env vars. `CORS_ORIGINS` must include the deployed frontend origin.
+
+### Database migrations
+Apply via Supabase dashboard SQL editor or `supabase db push`. Always run in
+numeric order (`001` → `011`). Migration `008` is required for Supabase Auth;
+`009` is required for semantic search.
 
 ## What's built
 
 - Dual-provider auth (Entra + Supabase email/password)
-- Document capture with Gemini AI structuring (`gemini-2.5-flash-lite`)
+- Document capture with Gemini AI structuring
 - Voice/audio input (Gemini transcription)
 - Semantic search + RAG with Ask-a-question (pgvector)
 - Document versioning; Word and PDF export
