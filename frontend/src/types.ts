@@ -1,6 +1,7 @@
 export type DocumentFormat = 'procedure' | 'checklist' | 'diagram' | 'reference';
 export type UserRole = 'admin' | 'member' | 'guest';
 export type DocumentVisibility = 'internal' | 'public';
+export type DocumentStatus = 'draft' | 'in_review' | 'approved' | 'published';
 
 export interface DocumentSection {
   heading?: string;
@@ -44,9 +45,22 @@ export interface DocumentRow {
   source_file_path: string | null;
   source: 'ai' | 'template';
   visibility: DocumentVisibility;
+  status: DocumentStatus;
+  reviewer_id: string | null;
+  review_requested_at: string | null;
+  reviewed_at: string | null;
+  reviewed_by: string | null;
   version: number;
   created_at: string;
   updated_at: string;
+}
+
+export interface ReviewComment {
+  id: string;
+  document_id: string;
+  user_id: string;
+  comment: string;
+  created_at: string;
 }
 
 /** A version entry returned by GET /api/documents/:id/versions. */
@@ -74,6 +88,7 @@ export interface DocumentListItem {
   tags: string[] | null;
   source: 'ai' | 'template';
   visibility: DocumentVisibility;
+  status: DocumentStatus;
   departments: string[];
   created_at: string;
   updated_at: string;

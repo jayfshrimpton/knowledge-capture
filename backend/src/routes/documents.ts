@@ -51,7 +51,7 @@ router.get('/documents', requireAuth, async (req, res) => {
 
   let query = supabaseAdmin
     .from('documents')
-    .select('id, title, author_name, format, summary, tags, source, visibility, created_at, updated_at, document_departments(department_id)')
+    .select('id, title, author_name, format, summary, tags, source, visibility, status, created_at, updated_at, document_departments(department_id)')
     .order('created_at', { ascending: false });
 
   if (ids === null) {
@@ -76,6 +76,7 @@ router.get('/documents', requireAuth, async (req, res) => {
     tags: d.tags,
     source: d.source,
     visibility: d.visibility,
+    status: d.status ?? 'draft',
     departments: (d.document_departments ?? []).map((r: any) => r.department_id),
     created_at: d.created_at,
     updated_at: d.updated_at,
@@ -438,6 +439,164 @@ router.delete('/documents/:id/shares/:userId', requireAuth, requireRole('admin')
   }
 
   res.json({ ok: true });
+});
+
+// ---------------------------------------------------------------------------
+// Review workflow
+// ---------------------------------------------------------------------------
+
+/** POST /api/documents/:id/submit-review — transition draft → in_review */
+router.post('/documents/:id/submit-review', requireAuth, async (req, res) => {
+  const { orgId } = req.auth!;
+  const { reviewerId } = req.body ?? {};
+
+  if (!reviewerId) return res.status(400).json({ error: 'reviewerId is required' });
+
+  if (!(await assertDocAccess(req, res, req.params.id))) return;
+
+  const { data, error } = await supabaseAdmin
+    .from('documents')
+    .update({ status: 'in_review', reviewer_id: reviewerId, review_requested_at: new Date().toISOString() })
+    .eq('id', req.params.id)
+    .eq('org_id', orgId)
+    .select('*')
+    .single();
+
+  if (error || !data) {
+    logger.error('Submit review failed', { route: 'POST /api/documents/:id/submit-review', errorType: 'SupabaseUpdateError' });
+    return res.status(500).json({ error: 'Failed to submit for review' });
+  }
+
+  res.json(data);
+});
+
+/** POST /api/documents/:id/approve — transition in_review → approved */
+router.post('/documents/:id/approve', requireAuth, async (req, res) => {
+  const { orgId, userId, role } = req.auth!;
+
+  if (!(await assertDocAccess(req, res, req.params.id))) return;
+
+  const { data: doc } = await supabaseAdmin
+    .from('documents')
+    .select('reviewer_id')
+    .eq('id', req.params.id)
+    .eq('org_id', orgId)
+    .maybeSingle();
+
+  if (!doc) return res.status(404).json({ error: 'Document not found' });
+  if (userId !== doc.reviewer_id && role !== 'admin') {
+    return res.status(403).json({ error: 'Only the assigned reviewer or an admin can approve' });
+  }
+
+  const { data, error } = await supabaseAdmin
+    .from('documents')
+    .update({ status: 'approved', reviewed_at: new Date().toISOString(), reviewed_by: userId })
+    .eq('id', req.params.id)
+    .eq('org_id', orgId)
+    .select('*')
+    .single();
+
+  if (error || !data) {
+    logger.error('Approve failed', { route: 'POST /api/documents/:id/approve', errorType: 'SupabaseUpdateError' });
+    return res.status(500).json({ error: 'Failed to approve document' });
+  }
+
+  res.json(data);
+});
+
+/** POST /api/documents/:id/reject — transition in_review → draft */
+router.post('/documents/:id/reject', requireAuth, async (req, res) => {
+  const { orgId, userId, role } = req.auth!;
+
+  if (!(await assertDocAccess(req, res, req.params.id))) return;
+
+  const { data: doc } = await supabaseAdmin
+    .from('documents')
+    .select('reviewer_id')
+    .eq('id', req.params.id)
+    .eq('org_id', orgId)
+    .maybeSingle();
+
+  if (!doc) return res.status(404).json({ error: 'Document not found' });
+  if (userId !== doc.reviewer_id && role !== 'admin') {
+    return res.status(403).json({ error: 'Only the assigned reviewer or an admin can reject' });
+  }
+
+  const { data, error } = await supabaseAdmin
+    .from('documents')
+    .update({ status: 'draft', reviewer_id: null, review_requested_at: null, reviewed_at: null, reviewed_by: null })
+    .eq('id', req.params.id)
+    .eq('org_id', orgId)
+    .select('*')
+    .single();
+
+  if (error || !data) {
+    logger.error('Reject failed', { route: 'POST /api/documents/:id/reject', errorType: 'SupabaseUpdateError' });
+    return res.status(500).json({ error: 'Failed to reject document' });
+  }
+
+  res.json(data);
+});
+
+/** POST /api/documents/:id/publish — transition approved → published (admin only) */
+router.post('/documents/:id/publish', requireAuth, requireRole('admin'), async (req, res) => {
+  const { orgId } = req.auth!;
+
+  const { data, error } = await supabaseAdmin
+    .from('documents')
+    .update({ status: 'published' })
+    .eq('id', req.params.id)
+    .eq('org_id', orgId)
+    .select('*')
+    .single();
+
+  if (error || !data) {
+    logger.error('Publish failed', { route: 'POST /api/documents/:id/publish', errorType: 'SupabaseUpdateError' });
+    return res.status(500).json({ error: 'Failed to publish document' });
+  }
+
+  res.json(data);
+});
+
+/** GET /api/documents/:id/comments — list review comments */
+router.get('/documents/:id/comments', requireAuth, async (req, res) => {
+  if (!(await assertDocAccess(req, res, req.params.id))) return;
+
+  const { data, error } = await supabaseAdmin
+    .from('review_comments')
+    .select('*')
+    .eq('document_id', req.params.id)
+    .order('created_at', { ascending: true });
+
+  if (error) {
+    logger.error('List comments failed', { route: 'GET /api/documents/:id/comments', errorType: 'SupabaseQueryError' });
+    return res.status(500).json({ error: 'Failed to load comments' });
+  }
+
+  res.json(data ?? []);
+});
+
+/** POST /api/documents/:id/comments — add a review comment */
+router.post('/documents/:id/comments', requireAuth, async (req, res) => {
+  const { userId } = req.auth!;
+  const { comment } = req.body ?? {};
+
+  if (!comment?.trim()) return res.status(400).json({ error: 'comment is required' });
+
+  if (!(await assertDocAccess(req, res, req.params.id))) return;
+
+  const { data, error } = await supabaseAdmin
+    .from('review_comments')
+    .insert({ document_id: req.params.id, user_id: userId, comment: comment.trim() })
+    .select('*')
+    .single();
+
+  if (error || !data) {
+    logger.error('Add comment failed', { route: 'POST /api/documents/:id/comments', errorType: 'SupabaseInsertError' });
+    return res.status(500).json({ error: 'Failed to add comment' });
+  }
+
+  res.status(201).json(data);
 });
 
 export default router;

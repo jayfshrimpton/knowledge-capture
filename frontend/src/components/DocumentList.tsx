@@ -1,10 +1,16 @@
-import { DocumentListItem, DocumentFormat } from '../types';
+import { DocumentListItem, DocumentFormat, DocumentStatus } from '../types';
 
 const FORMAT_DOT: Record<DocumentFormat, string> = {
   procedure: 'bg-blue-500',
   checklist: 'bg-green-500',
   reference: 'bg-purple-500',
   diagram: 'bg-amber-500',
+};
+
+const STATUS_PILL: Partial<Record<DocumentStatus, { bg: string; color: string; label: string }>> = {
+  draft:     { bg: 'bg-slate-100',   color: 'text-slate-500',  label: 'Draft' },
+  in_review: { bg: 'bg-amber-50',    color: 'text-amber-600',  label: 'In Review' },
+  approved:  { bg: 'bg-emerald-50',  color: 'text-emerald-600',label: 'Approved' },
 };
 
 function formatDate(iso: string): string {
@@ -51,6 +57,11 @@ export default function DocumentList({
             <div className="flex items-center gap-2">
               <span className={`h-2 w-2 shrink-0 rounded-full ${FORMAT_DOT[doc.format]}`} />
               <span className="truncate text-sm font-medium text-slate-800">{doc.title}</span>
+              {STATUS_PILL[doc.status] && (
+                <span className={`shrink-0 rounded px-1 py-0.5 text-xs font-medium ${STATUS_PILL[doc.status]!.bg} ${STATUS_PILL[doc.status]!.color}`}>
+                  {STATUS_PILL[doc.status]!.label}
+                </span>
+              )}
               {doc.visibility === 'public' && (
                 <span className="shrink-0 rounded px-1 py-0.5 text-xs font-medium bg-emerald-50 text-emerald-600">
                   Public

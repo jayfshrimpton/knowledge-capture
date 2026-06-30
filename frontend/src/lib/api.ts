@@ -1,5 +1,5 @@
 import { authHeader } from './session';
-import { DocumentRow, DocumentListItem, DocumentVersionListItem, DocumentVersionDetail, SearchResult, AskResponse, UserRole, Department, OrgMember, GuestInvite } from '../types';
+import { DocumentRow, DocumentListItem, DocumentVersionListItem, DocumentVersionDetail, SearchResult, AskResponse, UserRole, Department, OrgMember, GuestInvite, ReviewComment } from '../types';
 
 const API_URL = (import.meta.env.VITE_API_URL as string) ?? 'http://localhost:3001';
 
@@ -428,6 +428,57 @@ export async function getGapsCoverage(): Promise<TagCoverage[]> {
 export async function getGapsActivity(): Promise<UserActivity[]> {
   const res = await fetch(`${API_URL}/api/gaps/activity`, { headers: await authHeader() });
   return handle<UserActivity[]>(res);
+}
+
+// ---------------------------------------------------------------------------
+// Review workflow
+// ---------------------------------------------------------------------------
+
+export async function submitForReview(docId: string, reviewerId: string): Promise<DocumentRow> {
+  const res = await fetch(`${API_URL}/api/documents/${docId}/submit-review`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...(await authHeader()) },
+    body: JSON.stringify({ reviewerId }),
+  });
+  return handle<DocumentRow>(res);
+}
+
+export async function approveDocument(docId: string): Promise<DocumentRow> {
+  const res = await fetch(`${API_URL}/api/documents/${docId}/approve`, {
+    method: 'POST',
+    headers: await authHeader(),
+  });
+  return handle<DocumentRow>(res);
+}
+
+export async function rejectDocument(docId: string): Promise<DocumentRow> {
+  const res = await fetch(`${API_URL}/api/documents/${docId}/reject`, {
+    method: 'POST',
+    headers: await authHeader(),
+  });
+  return handle<DocumentRow>(res);
+}
+
+export async function publishDocument(docId: string): Promise<DocumentRow> {
+  const res = await fetch(`${API_URL}/api/documents/${docId}/publish`, {
+    method: 'POST',
+    headers: await authHeader(),
+  });
+  return handle<DocumentRow>(res);
+}
+
+export async function getReviewComments(docId: string): Promise<ReviewComment[]> {
+  const res = await fetch(`${API_URL}/api/documents/${docId}/comments`, { headers: await authHeader() });
+  return handle<ReviewComment[]>(res);
+}
+
+export async function addReviewComment(docId: string, comment: string): Promise<ReviewComment> {
+  const res = await fetch(`${API_URL}/api/documents/${docId}/comments`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...(await authHeader()) },
+    body: JSON.stringify({ comment }),
+  });
+  return handle<ReviewComment>(res);
 }
 
 // ---------------------------------------------------------------------------

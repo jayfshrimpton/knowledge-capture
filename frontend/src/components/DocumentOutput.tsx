@@ -1,8 +1,13 @@
-import { useState } from 'react';
-import { DocumentRow, DocumentFormat } from '../types';
+import { useState, useEffect } from 'react';
+import { DocumentRow, DocumentFormat, OrgMember, ReviewComment } from '../types';
 import DiagramView from './DiagramView';
 import ExportButtons from './ExportButtons';
 import VersionHistoryPanel from './VersionHistoryPanel';
+import { useAuth } from './AuthProvider';
+import {
+  submitForReview, approveDocument, rejectDocument, publishDocument,
+  getReviewComments, addReviewComment, listOrgMembers,
+} from '../lib/api';
 
 const FORMAT_BADGE: Record<DocumentFormat, { bg: string; color: string }> = {
   procedure: { bg: 'var(--color-lochmara-lightest)', color: 'var(--color-lochmara-dark)' },
@@ -220,6 +225,8 @@ export default function DocumentOutput({
       </div>
     </div>
 
+    <ReviewPanel doc={doc} onDocumentUpdated={onDocumentUpdated} />
+
     {showHistory && (
       <VersionHistoryPanel
         doc={doc}
@@ -231,6 +238,225 @@ export default function DocumentOutput({
       />
     )}
     </>
+  );
+}
+
+function ReviewPanel({ doc, onDocumentUpdated }: { doc: DocumentRow; onDocumentUpdated?: (updated: DocumentRow) => void }) {
+  const { me } = useAuth();
+  const userId = me?.user?.id;
+  const role = me?.user?.role;
+
+  const [orgMembers, setOrgMembers] = useState<OrgMember[]>([]);
+  const [comments, setComments] = useState<ReviewComment[]>([]);
+  const [selectedReviewerId, setSelectedReviewerId] = useState('');
+  const [commentText, setCommentText] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (role !== 'guest') {
+      listOrgMembers().then(setOrgMembers).catch(() => {});
+    }
+  }, [role]);
+
+  useEffect(() => {
+    if (doc.status === 'in_review' || doc.status === 'approved') {
+      getReviewComments(doc.id).then(setComments).catch(() => {});
+    } else {
+      setComments([]);
+    }
+  }, [doc.id, doc.status]);
+
+  const isReviewerOrAdmin = userId === doc.reviewer_id || role === 'admin';
+  const reviewerName = orgMembers.find(m => m.id === (doc.reviewed_by ?? doc.reviewer_id))?.name
+    ?? orgMembers.find(m => m.id === (doc.reviewed_by ?? doc.reviewer_id))?.email
+    ?? null;
+
+  async function act(fn: () => Promise<DocumentRow>) {
+    setLoading(true);
+    setError(null);
+    try {
+      const updated = await fn();
+      onDocumentUpdated?.(updated);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Action failed');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleAddComment() {
+    if (!commentText.trim()) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const c = await addReviewComment(doc.id, commentText.trim());
+      setComments(prev => [...prev, c]);
+      setCommentText('');
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to add comment');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const panelStyle = {
+    marginTop: '1rem',
+    padding: '1.25rem 1.5rem',
+    borderRadius: 'var(--radius-card)',
+    border: '1px solid var(--border-default)',
+    background: 'var(--surface-card)',
+  };
+
+  const status = doc.status ?? 'draft';
+
+  if (status === 'draft') {
+    if (role === 'guest') return null;
+    return (
+      <div style={panelStyle}>
+        <p style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+          Review
+        </p>
+        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end' }}>
+          <select
+            value={selectedReviewerId}
+            onChange={e => setSelectedReviewerId(e.target.value)}
+            className="st-input"
+            style={{ flex: 1 }}
+          >
+            <option value="">Select reviewer…</option>
+            {orgMembers.filter(m => m.id !== userId).map(m => (
+              <option key={m.id} value={m.id}>{m.name ?? m.email}</option>
+            ))}
+          </select>
+          <button
+            onClick={() => act(() => submitForReview(doc.id, selectedReviewerId))}
+            disabled={!selectedReviewerId || loading}
+            className="btn-primary"
+            style={{ whiteSpace: 'nowrap' }}
+          >
+            {loading ? 'Submitting…' : 'Submit for Review'}
+          </button>
+        </div>
+        {error && <p style={{ marginTop: '0.5rem', fontSize: '0.8125rem', color: 'var(--status-error)' }}>{error}</p>}
+      </div>
+    );
+  }
+
+  if (status === 'in_review') {
+    return (
+      <div style={panelStyle}>
+        <p style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+          In Review
+        </p>
+        {isReviewerOrAdmin && (
+          <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
+            <button onClick={() => act(() => approveDocument(doc.id))} disabled={loading} className="btn-primary">
+              {loading ? '…' : 'Approve'}
+            </button>
+            <button onClick={() => act(() => rejectDocument(doc.id))} disabled={loading} className="btn-secondary">
+              {loading ? '…' : 'Reject'}
+            </button>
+          </div>
+        )}
+        <CommentsThread comments={comments} commentText={commentText} onCommentTextChange={setCommentText} onAddComment={handleAddComment} loading={loading} />
+        {error && <p style={{ marginTop: '0.5rem', fontSize: '0.8125rem', color: 'var(--status-error)' }}>{error}</p>}
+      </div>
+    );
+  }
+
+  if (status === 'approved') {
+    return (
+      <div style={panelStyle}>
+        <p style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+          Approved
+        </p>
+        {role === 'admin' && (
+          <button onClick={() => act(() => publishDocument(doc.id))} disabled={loading} className="btn-primary" style={{ marginBottom: '1rem' }}>
+            {loading ? 'Publishing…' : 'Publish'}
+          </button>
+        )}
+        <CommentsThread comments={comments} commentText={commentText} onCommentTextChange={setCommentText} onAddComment={handleAddComment} loading={loading} />
+        {error && <p style={{ marginTop: '0.5rem', fontSize: '0.8125rem', color: 'var(--status-error)' }}>{error}</p>}
+      </div>
+    );
+  }
+
+  if (status === 'published') {
+    const publishedDate = doc.reviewed_at
+      ? new Date(doc.reviewed_at).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })
+      : null;
+    return (
+      <div style={{ ...panelStyle, background: 'var(--status-success-subtle)', borderColor: '#bbf7d0' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <span style={{ color: '#16a34a', fontSize: '1.125rem', lineHeight: 1 }}>✓</span>
+          <span style={{ fontWeight: 600, color: '#15803d', fontSize: '0.9375rem' }}>Published</span>
+          {(reviewerName || publishedDate) && (
+            <span style={{ fontSize: '0.8125rem', color: '#166534' }}>
+              {reviewerName ? `— reviewed by ${reviewerName}` : ''}
+              {publishedDate ? ` on ${publishedDate}` : ''}
+            </span>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  return null;
+}
+
+function CommentsThread({
+  comments, commentText, onCommentTextChange, onAddComment, loading,
+}: {
+  comments: ReviewComment[];
+  commentText: string;
+  onCommentTextChange: (text: string) => void;
+  onAddComment: () => void;
+  loading: boolean;
+}) {
+  return (
+    <div>
+      {comments.length > 0 && (
+        <div style={{ marginBottom: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+          {comments.map(c => (
+            <div
+              key={c.id}
+              style={{
+                padding: '0.625rem 0.875rem',
+                borderRadius: 'var(--radius-card)',
+                background: 'var(--surface-subtle)',
+                border: '1px solid var(--border-subtle)',
+                fontSize: '0.875rem',
+                color: 'var(--text-secondary)',
+              }}
+            >
+              <p style={{ whiteSpace: 'pre-wrap' }}>{c.comment}</p>
+              <p style={{ marginTop: '0.25rem', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                {new Date(c.created_at).toLocaleString()}
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
+      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end' }}>
+        <textarea
+          value={commentText}
+          onChange={e => onCommentTextChange(e.target.value)}
+          placeholder="Add a comment…"
+          rows={2}
+          className="st-textarea"
+          style={{ flex: 1, resize: 'none' }}
+        />
+        <button
+          onClick={onAddComment}
+          disabled={!commentText.trim() || loading}
+          className="btn-secondary"
+          style={{ whiteSpace: 'nowrap' }}
+        >
+          {loading ? '…' : 'Comment'}
+        </button>
+      </div>
+    </div>
   );
 }
 
