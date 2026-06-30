@@ -375,6 +375,36 @@ export default function Library() {
         {searchMode === 'search' && (
           loadingList ? (
             <p className="text-sm text-slate-400">Loading…</p>
+          ) : items.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '2rem 0.5rem' }}>
+              <svg
+                width="36"
+                height="36"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="var(--text-muted)"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                style={{ margin: '0 auto 0.75rem' }}
+              >
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+              </svg>
+              <p style={{ fontWeight: 600, fontSize: '0.875rem', color: 'var(--text-primary)', marginBottom: '0.375rem' }}>
+                No knowledge captured yet
+              </p>
+              <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', lineHeight: 1.5, marginBottom: '1rem' }}>
+                Start by capturing your first piece of knowledge — a process, procedure, or anything your team should know.
+              </p>
+              <Link
+                to="/"
+                className="btn-primary"
+                style={{ display: 'inline-block', textDecoration: 'none', fontSize: '0.8125rem' }}
+              >
+                Capture something
+              </Link>
+            </div>
           ) : (
             <DocumentList
               items={displayItems}

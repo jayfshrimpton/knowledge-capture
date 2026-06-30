@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import CaptureForm from '../components/CaptureForm';
 import DocumentOutput from '../components/DocumentOutput';
@@ -27,6 +27,13 @@ export default function Capture() {
   const [prefill, setPrefill] = useState<{ title: string; notes: string; key: number } | null>(null);
   const [current, setCurrent] = useState<DocumentRow | null>(null);
   const [sessionDocs, setSessionDocs] = useState<DocumentRow[]>([]);
+  const [resultVisible, setResultVisible] = useState(false);
+
+  useEffect(() => {
+    if (!current) { setResultVisible(false); return; }
+    const t = setTimeout(() => setResultVisible(true), 20);
+    return () => clearTimeout(t);
+  }, [current]);
 
   function handleCreated(doc: DocumentRow) {
     setCurrent(doc);
@@ -171,7 +178,11 @@ export default function Capture() {
         </div>
       )}
 
-      {current && <DocumentOutput doc={current} />}
+      {current && (
+        <div style={{ opacity: resultVisible ? 1 : 0, transition: 'opacity 400ms ease' }}>
+          <DocumentOutput doc={current} />
+        </div>
+      )}
 
       {sessionDocs.length > 1 && (
         <div>
