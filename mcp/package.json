@@ -1,0 +1,20 @@
+{
+  "name": "commonplace-mcp",
+  "version": "1.0.0",
+  "description": "MCP server for the Commonplace knowledge-base API",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/index.ts",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "tsx": "^4",
+    "typescript": "^5.5.4"
+  }
+}
