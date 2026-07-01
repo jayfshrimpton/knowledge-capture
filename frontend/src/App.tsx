@@ -9,6 +9,7 @@ import Billing from './pages/Billing';
 import ResetPassword from './pages/ResetPassword';
 import OrgSettings from './pages/OrgSettings';
 import GapDashboard from './pages/GapDashboard';
+import Developer from './pages/Developer';
 import AcceptInvite from './pages/AcceptInvite';
 import HomePage from './pages/marketing/HomePage';
 import HowItWorksPage from './pages/marketing/HowItWorksPage';
@@ -100,6 +101,7 @@ function Header() {
             {me?.user?.role === 'admin' && navLink('/billing', 'Billing', pathname.startsWith('/billing'))}
             {me?.user?.role === 'admin' && navLink('/settings', 'Settings', pathname.startsWith('/settings'))}
             {me?.user?.role === 'admin' && navLink('/gaps', 'Gaps', pathname.startsWith('/gaps'))}
+            {me?.user?.role !== 'guest' && navLink('/developer', 'Developer', pathname.startsWith('/developer'))}
           </nav>
         </div>
 
@@ -193,6 +195,7 @@ export default function App() {
           <Route path="/billing" element={<Billing />} />
           <Route path="/settings" element={<OrgSettings />} />
           <Route path="/gaps" element={<GapDashboard />} />
+          <Route path="/developer" element={<Developer />} />
           <Route path="/accept-invite" element={<AcceptInvite />} />
           <Route path="*" element={<Navigate to="/library" replace />} />
         </Routes>

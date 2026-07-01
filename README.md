@@ -158,6 +158,45 @@ All routes require `Authorization: Bearer <token>` (Entra or Supabase JWT) excep
 | `POST` | `/api/invites` | `requireAuth` | Org invite management |
 | `GET/POST` | `/api/billing/*` | `requireAuth` | Stripe billing (checkout, portal) |
 
+## AI agent integration (MCP)
+
+Commonplace ships an MCP server so AI agents (Claude Desktop, etc.) can read and
+write your knowledge base directly.
+
+**Server location:** `mcp/` — see [`mcp/README.md`](mcp/README.md) for full setup instructions.
+
+### Tools
+
+| Tool | Endpoint | Description |
+|------|----------|-------------|
+| `list_documents` | GET /api/documents | List all documents in the org |
+| `get_document` | GET /api/documents/:id | Fetch one document by ID |
+| `search_documents` | POST /api/search | Semantic search (pgvector) |
+| `create_document` | POST /api/capture | Create + AI-structure a document (uses Gemini; costs AI credits) |
+
+### Auth
+
+Set `COMMONPLACE_API_KEY` to your JWT token. Get it from **Settings → Developer** in the app.
+
+### Claude Desktop config
+
+```json
+{
+  "mcpServers": {
+    "commonplace": {
+      "command": "node",
+      "args": ["/path/to/commonplace/mcp/dist/index.js"],
+      "env": {
+        "COMMONPLACE_API_KEY": "your-api-key",
+        "COMMONPLACE_API_URL": "https://commonplace-api.onrender.com"
+      }
+    }
+  }
+}
+```
+
+Transport: **stdio**. Build first: `cd mcp && npm install && npm run build`.
+
 ## Deployment
 
 ### Frontend → Vercel
