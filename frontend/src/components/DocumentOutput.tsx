@@ -6,7 +6,7 @@ import VersionHistoryPanel from './VersionHistoryPanel';
 import { useAuth } from './AuthProvider';
 import {
   submitForReview, approveDocument, rejectDocument, publishDocument,
-  getReviewComments, addReviewComment, listOrgMembers,
+  getReviewComments, addReviewComment, listOrgMembers, updateDocumentExpiry,
 } from '../lib/api';
 
 const FORMAT_BADGE: Record<DocumentFormat, { bg: string; color: string }> = {
@@ -227,6 +227,8 @@ export default function DocumentOutput({
 
     <ReviewPanel doc={doc} onDocumentUpdated={onDocumentUpdated} />
 
+    <ExpirySection doc={doc} onDocumentUpdated={onDocumentUpdated} />
+
     {showHistory && (
       <VersionHistoryPanel
         doc={doc}
@@ -403,6 +405,86 @@ function ReviewPanel({ doc, onDocumentUpdated }: { doc: DocumentRow; onDocumentU
   }
 
   return null;
+}
+
+function ExpirySection({ doc, onDocumentUpdated }: { doc: DocumentRow; onDocumentUpdated?: (updated: DocumentRow) => void }) {
+  const { me } = useAuth();
+  const role = me?.user?.role;
+
+  const [reviewDueDate, setReviewDueDate] = useState<string>(doc.review_due_date ? doc.review_due_date.slice(0, 10) : '');
+  const [reviewCycleDays, setReviewCycleDays] = useState<number | null>(doc.review_cycle_days ?? null);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+
+  if (role !== 'admin') return null;
+
+  async function handleSave() {
+    setSaving(true);
+    setSaveError(null);
+    setSaveSuccess(false);
+    try {
+      const updated = await updateDocumentExpiry(doc.id, {
+        review_due_date: reviewDueDate ? new Date(reviewDueDate).toISOString() : null,
+        review_cycle_days: reviewCycleDays,
+      });
+      onDocumentUpdated?.(updated);
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 2000);
+    } catch (e) {
+      setSaveError(e instanceof Error ? e.message : 'Failed to save');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const panelStyle = {
+    marginTop: '1rem',
+    padding: '1.25rem 1.5rem',
+    borderRadius: 'var(--radius-card)',
+    border: '1px solid var(--border-default)',
+    background: 'var(--surface-card)',
+  };
+
+  return (
+    <div style={panelStyle}>
+      <p style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+        Review Schedule
+      </p>
+      <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-end', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+          <label style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>Review due date</label>
+          <input
+            type="date"
+            value={reviewDueDate}
+            onChange={e => setReviewDueDate(e.target.value)}
+            className="st-input"
+            style={{ width: '11rem' }}
+          />
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+          <label style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>Review cycle</label>
+          <select
+            value={reviewCycleDays ?? ''}
+            onChange={e => setReviewCycleDays(e.target.value ? Number(e.target.value) : null)}
+            className="st-input"
+            style={{ width: '9rem' }}
+          >
+            <option value="">None</option>
+            <option value="30">30 days</option>
+            <option value="60">60 days</option>
+            <option value="90">90 days</option>
+            <option value="180">180 days</option>
+            <option value="365">365 days</option>
+          </select>
+        </div>
+        <button onClick={handleSave} disabled={saving} className="btn-secondary" style={{ whiteSpace: 'nowrap' }}>
+          {saving ? 'Saving…' : saveSuccess ? 'Saved ✓' : 'Save'}
+        </button>
+      </div>
+      {saveError && <p style={{ marginTop: '0.5rem', fontSize: '0.8125rem', color: 'var(--status-error)' }}>{saveError}</p>}
+    </div>
+  );
 }
 
 function CommentsThread({

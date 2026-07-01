@@ -53,6 +53,8 @@ export interface DocumentRow {
   version: number;
   created_at: string;
   updated_at: string;
+  review_due_date?: string | null;
+  review_cycle_days?: number | null;
 }
 
 export interface ReviewComment {
@@ -92,6 +94,8 @@ export interface DocumentListItem {
   departments: string[];
   created_at: string;
   updated_at: string;
+  review_due_date?: string | null;
+  review_cycle_days?: number | null;
 }
 
 /** Result from POST /api/search — DocumentListItem plus a similarity score. */

@@ -85,6 +85,45 @@ router.get('/documents', requireAuth, async (req, res) => {
   res.json(result);
 });
 
+/** GET /api/documents/expiring — list documents with review_due_date within the next 7 days. */
+router.get('/documents/expiring', requireAuth, async (req, res) => {
+  try {
+    const { orgId } = req.auth!;
+    const sevenDaysFromNow = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+    const now = new Date().toISOString();
+    const { data, error } = await supabaseAdmin
+      .from('documents')
+      .select('id, title, review_due_date, org_id')
+      .eq('org_id', orgId)
+      .lte('review_due_date', sevenDaysFromNow)
+      .gte('review_due_date', now)
+      .not('review_due_date', 'is', null);
+    if (error) throw error;
+    res.json(data || []);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch expiring documents' });
+  }
+});
+
+/** PATCH /api/documents/:id/expiry — update review_due_date and review_cycle_days. */
+router.patch('/documents/:id/expiry', requireAuth, requireRole('admin'), async (req, res) => {
+  try {
+    const { orgId } = req.auth!;
+    const { review_due_date, review_cycle_days } = req.body;
+    const { data, error } = await supabaseAdmin
+      .from('documents')
+      .update({ review_due_date, review_cycle_days })
+      .eq('id', req.params.id)
+      .eq('org_id', orgId)
+      .select()
+      .single();
+    if (error) throw error;
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to update document expiry' });
+  }
+});
+
 /** GET /api/documents/:id — fetch a single document (access-checked). */
 router.get('/documents/:id', requireAuth, async (req, res) => {
   const { orgId } = req.auth!;

@@ -72,6 +72,22 @@ export default function DocumentList({
                   Template
                 </span>
               )}
+              {doc.review_due_date && (() => {
+                const due = new Date(doc.review_due_date);
+                const now = new Date();
+                const sevenDays = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+                if (due < now) {
+                  return (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">Overdue</span>
+                  );
+                }
+                if (due <= sevenDays) {
+                  return (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-800">Due soon</span>
+                  );
+                }
+                return null;
+              })()}
             </div>
             <div className="mt-0.5 flex items-center justify-between text-xs text-slate-400">
               <span className="capitalize">{doc.format}</span>

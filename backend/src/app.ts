@@ -1,6 +1,8 @@
 import express from 'express';
 import cors from 'cors';
+import cron from 'node-cron';
 import { logger } from './lib/logger';
+import { checkExpiringDocuments } from './services/notifications';
 
 import bootstrapRoutes from './routes/bootstrap';
 import captureRoutes from './routes/capture';
@@ -50,6 +52,10 @@ app.use('/api', invitesRoutes);
 app.use('/api', departmentRoutes);
 app.use('/api', orgRoutes);
 app.use('/api', gapsRoutes);
+
+cron.schedule('0 8 * * *', () => {
+  checkExpiringDocuments().catch(console.error);
+});
 
 app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   logger.error('Unhandled error', { errorType: err?.code ?? 'UnhandledError' });

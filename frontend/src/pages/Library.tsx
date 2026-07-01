@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import DocumentList from '../components/DocumentList';
 import DocumentOutput from '../components/DocumentOutput';
 import { useAuth } from '../components/AuthProvider';
-import { listDocuments, getDocument, searchDocuments, askQuestion, listDepartments } from '../lib/api';
+import { listDocuments, getDocument, searchDocuments, askQuestion, listDepartments, getExpiringDocuments } from '../lib/api';
 import { DocumentListItem, DocumentRow, SearchResult, AskResponse, Department } from '../types';
 
 export default function Library() {
@@ -14,6 +14,7 @@ export default function Library() {
 
   // Document list state
   const [items, setItems] = useState<DocumentListItem[]>([]);
+  const [expiringDocs, setExpiringDocs] = useState<DocumentListItem[]>([]);
   const [selected, setSelected] = useState<DocumentRow | null>(null);
   const [loadingList, setLoadingList] = useState(true);
   const [loadingDoc, setLoadingDoc] = useState(false);
@@ -41,6 +42,8 @@ export default function Library() {
       .then(setItems)
       .catch((err) => setError(err instanceof Error ? err.message : 'Failed to load documents'))
       .finally(() => setLoadingList(false));
+
+    getExpiringDocuments().then(setExpiringDocs).catch(() => {});
 
     if (role !== 'guest') {
       listDepartments().then(setDepartments).catch(() => {});
@@ -368,6 +371,13 @@ export default function Library() {
                 {dept.name}
               </button>
             ))}
+          </div>
+        )}
+
+        {/* Expiring documents banner */}
+        {expiringDocs.length > 0 && (
+          <div className="bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 rounded mb-4">
+            ⚠ {expiringDocs.length} document{expiringDocs.length !== 1 ? 's' : ''} due for review this week
           </div>
         )}
 
