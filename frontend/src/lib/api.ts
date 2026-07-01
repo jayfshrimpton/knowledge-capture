@@ -512,3 +512,26 @@ export async function getBillingPortalUrl(): Promise<{ portalUrl: string }> {
   const res = await fetch(`${API_URL}/api/billing/portal`, { headers: await authHeader() });
   return handle<{ portalUrl: string }>(res);
 }
+
+// ---------------------------------------------------------------------------
+// Knowledge expiry
+// ---------------------------------------------------------------------------
+
+export async function getExpiringDocuments(): Promise<DocumentListItem[]> {
+  const res = await fetch(`${API_URL}/api/documents/expiring`, {
+    headers: await authHeader(),
+  });
+  return handle<DocumentListItem[]>(res);
+}
+
+export async function updateDocumentExpiry(
+  id: string,
+  data: { review_due_date?: string | null; review_cycle_days?: number | null }
+): Promise<DocumentRow> {
+  const res = await fetch(`${API_URL}/api/documents/${id}/expiry`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...(await authHeader()) },
+    body: JSON.stringify(data),
+  });
+  return handle<DocumentRow>(res);
+}
