@@ -1,0 +1,62 @@
+name: Database Migrations
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'supabase/migrations/**'
+      - 'backend/scripts/migrate.ts'
+  pull_request:
+    paths:
+      - 'supabase/migrations/**'
+      - 'backend/scripts/migrate.ts'
+  workflow_dispatch: # allow manual runs
+
+jobs:
+  check-migrations:
+    name: Check for unapplied migrations
+    runs-on: ubuntu-latest
+    # Run on PRs — fail fast if a migration file was added but not applied
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: backend
+        run: npm ci
+
+      - name: Check all migrations are applied
+        working-directory: backend
+        run: npm run migrate:check
+        env:
+          DATABASE_URL: ${{ secrets.SUPABASE_DATABASE_URL }}
+
+  apply-migrations:
+    name: Apply pending migrations
+    runs-on: ubuntu-latest
+    # Only auto-apply on pushes to main
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: backend
+        run: npm ci
+
+      - name: Apply pending migrations
+        working-directory: backend
+        run: npm run migrate
+        env:
+          DATABASE_URL: ${{ secrets.SUPABASE_DATABASE_URL }}

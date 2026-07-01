@@ -18,6 +18,7 @@ import invitesRoutes from './routes/invites';
 import departmentRoutes from './routes/departments';
 import orgRoutes from './routes/org';
 import gapsRoutes from './routes/gaps';
+import stylesRoutes from './routes/styles';
 
 const origins = (process.env.CORS_ORIGINS ?? 'http://localhost:5173')
   .split(',')
@@ -52,6 +53,7 @@ app.use('/api', invitesRoutes);
 app.use('/api', departmentRoutes);
 app.use('/api', orgRoutes);
 app.use('/api', gapsRoutes);
+app.use('/api', stylesRoutes);
 
 cron.schedule('0 8 * * *', () => {
   checkExpiringDocuments().catch(console.error);

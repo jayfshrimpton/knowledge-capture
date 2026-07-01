@@ -1,5 +1,5 @@
 import { authHeader } from './session';
-import { DocumentRow, DocumentListItem, DocumentVersionListItem, DocumentVersionDetail, SearchResult, AskResponse, UserRole, Department, OrgMember, GuestInvite, ReviewComment } from '../types';
+import { DocumentRow, DocumentListItem, DocumentVersionListItem, DocumentVersionDetail, SearchResult, AskResponse, UserRole, Department, OrgMember, GuestInvite, ReviewComment, BrandStyle, OrgStyle, ExtractedStyleDraft } from '../types';
 
 const API_URL = (import.meta.env.VITE_API_URL as string) ?? 'http://localhost:3001';
 
@@ -355,6 +355,70 @@ export async function shareDocument(docId: string, userId: string): Promise<void
 
 export async function unshareDocument(docId: string, userId: string): Promise<void> {
   const res = await fetch(`${API_URL}/api/documents/${docId}/shares/${userId}`, {
+    method: 'DELETE',
+    headers: await authHeader(),
+  });
+  return handle<void>(res);
+}
+
+// ---------------------------------------------------------------------------
+// Brand styles
+// ---------------------------------------------------------------------------
+
+export async function listOrgStyles(): Promise<OrgStyle[]> {
+  const res = await fetch(`${API_URL}/api/styles`, { headers: await authHeader() });
+  return handle<OrgStyle[]>(res);
+}
+
+/** Uploads a reference document and returns a draft style (not yet saved). */
+export async function extractOrgStyle(file: File): Promise<ExtractedStyleDraft> {
+  const form = new FormData();
+  form.append('file', file);
+  const res = await fetch(`${API_URL}/api/styles/extract`, {
+    method: 'POST',
+    headers: await authHeader(),
+    body: form,
+  });
+  return handle<ExtractedStyleDraft>(res);
+}
+
+export async function saveOrgStyle(payload: {
+  name: string;
+  style: BrandStyle;
+  sourceFilePath?: string | null;
+  sourceFilename?: string | null;
+  makeDefault?: boolean;
+}): Promise<OrgStyle> {
+  const res = await fetch(`${API_URL}/api/styles`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...(await authHeader()) },
+    body: JSON.stringify(payload),
+  });
+  return handle<OrgStyle>(res);
+}
+
+export async function updateOrgStyle(
+  id: string,
+  patch: { name?: string; style?: BrandStyle },
+): Promise<OrgStyle> {
+  const res = await fetch(`${API_URL}/api/styles/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...(await authHeader()) },
+    body: JSON.stringify(patch),
+  });
+  return handle<OrgStyle>(res);
+}
+
+export async function setDefaultOrgStyle(id: string): Promise<void> {
+  const res = await fetch(`${API_URL}/api/styles/${id}/default`, {
+    method: 'POST',
+    headers: await authHeader(),
+  });
+  return handle<void>(res);
+}
+
+export async function deleteOrgStyle(id: string): Promise<void> {
+  const res = await fetch(`${API_URL}/api/styles/${id}`, {
     method: 'DELETE',
     headers: await authHeader(),
   });

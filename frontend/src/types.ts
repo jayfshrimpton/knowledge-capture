@@ -133,3 +133,35 @@ export interface GuestInvite {
   acceptedAt: string | null;
   createdAt: string;
 }
+
+// ---------------------------------------------------------------------------
+// Brand styles — org document styling captured from a reference document.
+// ---------------------------------------------------------------------------
+
+export interface BrandStyle {
+  fonts: { heading: string; body: string };
+  colors: { primary: string; secondary: string; accent: string; text: string };
+  logo: { path: string; ext: string } | null;
+  structure: { numberedSections: boolean; headingRule: boolean };
+}
+
+/** A saved org style, as returned by the API. */
+export interface OrgStyle {
+  id: string;
+  name: string;
+  isDefault: boolean;
+  style: BrandStyle;
+  sourceFilename: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** The draft returned by POST /api/styles/extract (not yet persisted). */
+export interface ExtractedStyleDraft {
+  name: string;
+  style: BrandStyle;
+  method: 'docx-theme' | 'ai-inferred' | 'default';
+  notes: string[];
+  sourceFilePath: string | null;
+  sourceFilename: string | null;
+}

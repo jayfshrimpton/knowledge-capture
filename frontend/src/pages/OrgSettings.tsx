@@ -12,10 +12,16 @@ import {
   removeDeptMember,
   listGuestInvites,
   createGuestInvite,
+  listOrgStyles,
+  extractOrgStyle,
+  saveOrgStyle,
+  updateOrgStyle,
+  setDefaultOrgStyle,
+  deleteOrgStyle,
 } from '../lib/api';
-import { OrgMember, Department, GuestInvite, UserRole } from '../types';
+import { OrgMember, Department, GuestInvite, UserRole, OrgStyle, BrandStyle, ExtractedStyleDraft } from '../types';
 
-type Tab = 'members' | 'departments' | 'guests';
+type Tab = 'members' | 'departments' | 'guests' | 'branding';
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -443,6 +449,338 @@ function GuestsTab() {
 // ---------------------------------------------------------------------------
 // Main page
 // ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// Branding Tab
+// ---------------------------------------------------------------------------
+
+const COLOUR_FIELDS: { key: keyof BrandStyle['colors']; label: string }[] = [
+  { key: 'primary', label: 'Primary (headings)' },
+  { key: 'text', label: 'Body text' },
+  { key: 'accent', label: 'Accent' },
+  { key: 'secondary', label: 'Secondary' },
+];
+
+/** Editable form for a BrandStyle — reused for a new draft and for editing a saved style. */
+function StyleFields({ value, onChange }: { value: BrandStyle; onChange: (s: BrandStyle) => void }) {
+  const set = (patch: Partial<BrandStyle>) => onChange({ ...value, ...patch });
+
+  return (
+    <div className="grid gap-4" style={{ gridTemplateColumns: '1fr 1fr' }}>
+      <div>
+        <div className="text-xs font-semibold mb-2" style={{ color: 'var(--text-secondary)' }}>Colours</div>
+        <div className="grid gap-2">
+          {COLOUR_FIELDS.map(({ key, label }) => (
+            <label key={key} className="flex items-center gap-2 text-sm" style={{ color: 'var(--text-primary)' }}>
+              <input
+                type="color"
+                value={value.colors[key]}
+                onChange={(e) => set({ colors: { ...value.colors, [key]: e.target.value.toUpperCase() } })}
+                style={{ width: 34, height: 26, border: 'none', background: 'none', cursor: 'pointer' }}
+              />
+              <span style={{ width: 74, fontFamily: 'monospace' }}>{value.colors[key]}</span>
+              <span style={{ color: 'var(--text-secondary)' }}>{label}</span>
+            </label>
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <div className="text-xs font-semibold mb-2" style={{ color: 'var(--text-secondary)' }}>Fonts &amp; structure</div>
+        <div className="grid gap-2">
+          <label className="text-sm" style={{ color: 'var(--text-primary)' }}>
+            Heading font
+            <input
+              className="w-full mt-1 rounded border px-2 py-1 text-sm"
+              style={{ background: 'var(--surface-card)', borderColor: 'var(--border-default)', color: 'var(--text-primary)' }}
+              value={value.fonts.heading}
+              onChange={(e) => set({ fonts: { ...value.fonts, heading: e.target.value } })}
+            />
+          </label>
+          <label className="text-sm" style={{ color: 'var(--text-primary)' }}>
+            Body font
+            <input
+              className="w-full mt-1 rounded border px-2 py-1 text-sm"
+              style={{ background: 'var(--surface-card)', borderColor: 'var(--border-default)', color: 'var(--text-primary)' }}
+              value={value.fonts.body}
+              onChange={(e) => set({ fonts: { ...value.fonts, body: e.target.value } })}
+            />
+          </label>
+          <label className="flex items-center gap-2 text-sm mt-1" style={{ color: 'var(--text-primary)' }}>
+            <input
+              type="checkbox"
+              checked={value.structure.numberedSections}
+              onChange={(e) => set({ structure: { ...value.structure, numberedSections: e.target.checked } })}
+            />
+            Number the sections
+          </label>
+          <label className="flex items-center gap-2 text-sm" style={{ color: 'var(--text-primary)' }}>
+            <input
+              type="checkbox"
+              checked={value.structure.headingRule}
+              onChange={(e) => set({ structure: { ...value.structure, headingRule: e.target.checked } })}
+            />
+            Rule under headings
+          </label>
+          <div className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>
+            {value.logo ? '✓ Logo captured from the document' : 'No logo captured'}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Small row of colour swatches for the saved-styles list. */
+function Swatches({ style }: { style: BrandStyle }) {
+  return (
+    <div className="flex gap-1">
+      {(['primary', 'text', 'accent', 'secondary'] as const).map((k) => (
+        <span key={k} title={`${k}: ${style.colors[k]}`}
+          style={{ width: 16, height: 16, borderRadius: 3, background: style.colors[k], border: '1px solid var(--border-default)' }} />
+      ))}
+    </div>
+  );
+}
+
+function BrandingTab() {
+  const [styles, setStyles] = useState<OrgStyle[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  // Draft (new style being extracted / edited before save)
+  const [draft, setDraft] = useState<ExtractedStyleDraft | null>(null);
+  const [draftName, setDraftName] = useState('');
+  const [makeDefault, setMakeDefault] = useState(true);
+
+  // Inline editing of a saved style
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editStyle, setEditStyle] = useState<BrandStyle | null>(null);
+  const [editName, setEditName] = useState('');
+
+  useEffect(() => {
+    listOrgStyles()
+      .then(setStyles)
+      .catch((err) => setError(err.message ?? 'Failed to load styles'))
+      .finally(() => setLoading(false));
+  }, []);
+
+  async function handleFile(file: File) {
+    setError(null);
+    setBusy(true);
+    try {
+      const d = await extractOrgStyle(file);
+      setDraft(d);
+      setDraftName(d.name);
+      setMakeDefault(styles.length === 0 ? true : true);
+    } catch (err: any) {
+      setError(err.message ?? 'Could not read a style from that document');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleSaveDraft() {
+    if (!draft) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await saveOrgStyle({
+        name: draftName.trim() || draft.name,
+        style: draft.style,
+        sourceFilePath: draft.sourceFilePath,
+        sourceFilename: draft.sourceFilename,
+        makeDefault,
+      });
+      const fresh = await listOrgStyles();
+      setStyles(fresh);
+      setDraft(null);
+    } catch (err: any) {
+      setError(err.message ?? 'Failed to save style');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleSetDefault(id: string) {
+    setBusy(true);
+    try {
+      await setDefaultOrgStyle(id);
+      setStyles((prev) => prev.map((s) => ({ ...s, isDefault: s.id === id })));
+    } catch (err: any) {
+      setError(err.message ?? 'Failed to set default');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleDelete(id: string) {
+    if (!confirm('Delete this style?')) return;
+    setBusy(true);
+    try {
+      await deleteOrgStyle(id);
+      setStyles((prev) => prev.filter((s) => s.id !== id));
+    } catch (err: any) {
+      setError(err.message ?? 'Failed to delete');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleSaveEdit() {
+    if (!editingId || !editStyle) return;
+    setBusy(true);
+    try {
+      const updated = await updateOrgStyle(editingId, { name: editName.trim() || undefined, style: editStyle });
+      setStyles((prev) => prev.map((s) => (s.id === editingId ? updated : s)));
+      setEditingId(null);
+      setEditStyle(null);
+    } catch (err: any) {
+      setError(err.message ?? 'Failed to update style');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div>
+      <Section title="Company document style">
+        <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>
+          Upload an existing company document (Word works best) and we&apos;ll capture its colours,
+          fonts, logo and structure. Save it as your organisation&apos;s default and every new document
+          you export will match that look.
+        </p>
+
+        <label
+          className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm cursor-pointer"
+          style={{ background: 'var(--accent)', color: '#fff', opacity: busy ? 0.6 : 1 }}
+        >
+          {busy ? 'Reading…' : 'Upload a document'}
+          <input
+            type="file"
+            accept=".docx,.pdf,.txt"
+            hidden
+            disabled={busy}
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) handleFile(f);
+              e.target.value = '';
+            }}
+          />
+        </label>
+        <span className="text-xs ml-3" style={{ color: 'var(--text-secondary)' }}>.docx, .pdf or .txt · max 15 MB</span>
+
+        {error && <div className="text-sm mt-3" style={{ color: '#DC2626' }}>{error}</div>}
+
+        {draft && (
+          <div className="rounded-xl border p-4 mt-4" style={{ borderColor: 'var(--border-default)' }}>
+            {draft.notes.map((n, i) => (
+              <div key={i} className="text-xs mb-1" style={{ color: 'var(--text-secondary)' }}>• {n}</div>
+            ))}
+            <label className="block text-sm mt-2 mb-3" style={{ color: 'var(--text-primary)' }}>
+              Style name
+              <input
+                className="w-full mt-1 rounded border px-2 py-1 text-sm"
+                style={{ background: 'var(--surface-card)', borderColor: 'var(--border-default)', color: 'var(--text-primary)' }}
+                value={draftName}
+                onChange={(e) => setDraftName(e.target.value)}
+              />
+            </label>
+            <StyleFields value={draft.style} onChange={(s) => setDraft({ ...draft, style: s })} />
+            <div className="flex items-center gap-3 mt-4">
+              <button
+                onClick={handleSaveDraft}
+                disabled={busy}
+                className="rounded-lg px-4 py-2 text-sm"
+                style={{ background: 'var(--accent)', color: '#fff' }}
+              >
+                Save style
+              </button>
+              <label className="flex items-center gap-2 text-sm" style={{ color: 'var(--text-primary)' }}>
+                <input type="checkbox" checked={makeDefault} onChange={(e) => setMakeDefault(e.target.checked)} />
+                Make default
+              </label>
+              <button onClick={() => setDraft(null)} className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+      </Section>
+
+      <Section title="Saved styles">
+        {loading ? (
+          <div className="text-sm" style={{ color: 'var(--text-secondary)' }}>Loading…</div>
+        ) : styles.length === 0 ? (
+          <div className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+            No styles yet. Upload a document above to create your first one.
+          </div>
+        ) : (
+          <div className="grid gap-2">
+            {styles.map((s) => (
+              <div key={s.id} className="rounded-lg border p-3" style={{ borderColor: 'var(--border-default)' }}>
+                <div className="flex items-center gap-3">
+                  <Swatches style={s.style} />
+                  <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{s.name}</span>
+                  {s.isDefault && (
+                    <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: 'var(--accent)', color: '#fff' }}>
+                      Default
+                    </span>
+                  )}
+                  <div className="ml-auto flex items-center gap-3">
+                    {!s.isDefault && (
+                      <button onClick={() => handleSetDefault(s.id)} disabled={busy} className="text-sm" style={{ color: 'var(--accent)' }}>
+                        Set default
+                      </button>
+                    )}
+                    <button
+                      onClick={() => {
+                        setEditingId(editingId === s.id ? null : s.id);
+                        setEditStyle(s.style);
+                        setEditName(s.name);
+                      }}
+                      className="text-sm"
+                      style={{ color: 'var(--text-secondary)' }}
+                    >
+                      {editingId === s.id ? 'Close' : 'Edit'}
+                    </button>
+                    <button onClick={() => handleDelete(s.id)} disabled={busy} className="text-sm" style={{ color: '#DC2626' }}>
+                      Delete
+                    </button>
+                  </div>
+                </div>
+
+                {editingId === s.id && editStyle && (
+                  <div className="mt-3 pt-3 border-t" style={{ borderColor: 'var(--border-default)' }}>
+                    <label className="block text-sm mb-3" style={{ color: 'var(--text-primary)' }}>
+                      Name
+                      <input
+                        className="w-full mt-1 rounded border px-2 py-1 text-sm"
+                        style={{ background: 'var(--surface-card)', borderColor: 'var(--border-default)', color: 'var(--text-primary)' }}
+                        value={editName}
+                        onChange={(e) => setEditName(e.target.value)}
+                      />
+                    </label>
+                    <StyleFields value={editStyle} onChange={setEditStyle} />
+                    <button
+                      onClick={handleSaveEdit}
+                      disabled={busy}
+                      className="rounded-lg px-4 py-2 text-sm mt-3"
+                      style={{ background: 'var(--accent)', color: '#fff' }}
+                    >
+                      Save changes
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </Section>
+    </div>
+  );
+}
+
 export default function OrgSettings() {
   const { me } = useAuth();
   const navigate = useNavigate();
@@ -458,6 +796,7 @@ export default function OrgSettings() {
     { id: 'members', label: 'Members' },
     { id: 'departments', label: 'Departments' },
     { id: 'guests', label: 'Guests' },
+    { id: 'branding', label: 'Branding' },
   ];
 
   return (
@@ -495,6 +834,7 @@ export default function OrgSettings() {
       {activeTab === 'members' && <MembersTab />}
       {activeTab === 'departments' && <DepartmentsTab />}
       {activeTab === 'guests' && <GuestsTab />}
+      {activeTab === 'branding' && <BrandingTab />}
     </div>
   );
 }

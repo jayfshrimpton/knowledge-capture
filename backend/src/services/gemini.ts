@@ -85,6 +85,87 @@ const model = genAI.getGenerativeModel({
   },
 });
 
+// ---------------------------------------------------------------------------
+// Brand-style inference — used as a fallback when a reference document has no
+// machine-readable theme (e.g. a PDF or plain-text upload). The model infers a
+// professional palette and font choices from the document's tone and industry.
+// ---------------------------------------------------------------------------
+
+const BRAND_SYSTEM_PROMPT = `You are a brand designer. Given the text of a company document, infer the visual brand style it was most likely produced with.
+Consider the industry, tone, and any colour/brand words in the text.
+Return ONLY valid JSON, no markdown, matching this exact schema:
+{
+  "fonts": { "heading": "Font name", "body": "Font name" },
+  "colors": { "primary": "#RRGGBB", "secondary": "#RRGGBB", "accent": "#RRGGBB", "text": "#RRGGBB" },
+  "structure": { "numberedSections": true, "headingRule": true }
+}
+Rules:
+- Colours must be valid 6-digit hex strings.
+- "primary" is the main brand colour (headings/title); "text" is the body colour (usually near-black); "accent" is a highlight colour distinct from primary.
+- Prefer common, safe office fonts (e.g. Calibri, Arial, Helvetica, Georgia, Times New Roman).
+- This is a best-effort inference from text alone; choose a coherent, professional palette.`;
+
+const brandModel = genAI.getGenerativeModel({
+  model: 'gemini-2.5-flash-lite',
+  systemInstruction: BRAND_SYSTEM_PROMPT,
+  generationConfig: {
+    responseMimeType: 'application/json',
+    maxOutputTokens: 500,
+    temperature: 0.4,
+  },
+});
+
+const HEX_RE = /^#[0-9a-fA-F]{6}$/;
+
+/**
+ * Infers a partial brand style (fonts, colours, structure) from document text.
+ * Returns only the fields the model produced in a valid shape; the caller merges
+ * these over sensible defaults. Never throws — on any failure returns {}.
+ */
+export async function inferBrandStyle(rawText: string): Promise<{
+  fonts?: { heading: string; body: string };
+  colors?: { primary: string; secondary: string; accent: string; text: string };
+  structure?: { numberedSections: boolean; headingRule: boolean };
+}> {
+  try {
+    const prompt = `Document text (first 4000 chars):\n${rawText.slice(0, 4000)}`;
+    const result = await withRetry(() => brandModel.generateContent(prompt), {
+      attempts: 2,
+      initialDelayMs: 400,
+    });
+    const parsed = JSON.parse(result.response.text());
+
+    const out: Awaited<ReturnType<typeof inferBrandStyle>> = {};
+
+    if (parsed?.fonts && typeof parsed.fonts.heading === 'string' && typeof parsed.fonts.body === 'string') {
+      out.fonts = { heading: parsed.fonts.heading, body: parsed.fonts.body };
+    }
+
+    const c = parsed?.colors;
+    if (
+      c &&
+      HEX_RE.test(c.primary) &&
+      HEX_RE.test(c.secondary) &&
+      HEX_RE.test(c.accent) &&
+      HEX_RE.test(c.text)
+    ) {
+      out.colors = { primary: c.primary, secondary: c.secondary, accent: c.accent, text: c.text };
+    }
+
+    if (parsed?.structure) {
+      out.structure = {
+        numberedSections: parsed.structure.numberedSections !== false,
+        headingRule: parsed.structure.headingRule !== false,
+      };
+    }
+
+    return out;
+  } catch (err) {
+    console.warn('Brand style inference failed; falling back to defaults.');
+    return {};
+  }
+}
+
 const VALID_FORMATS: DocumentFormat[] = ['procedure', 'checklist', 'diagram', 'reference'];
 
 function buildUserPrompt(title: string, author: string, rawText: string): string {

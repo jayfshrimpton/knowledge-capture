@@ -1,7 +1,7 @@
 -- COM-14: Role-based access control — departments, document visibility, guest access.
 
 -- Departments
-CREATE TABLE departments (
+CREATE TABLE IF NOT EXISTS departments (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   org_id uuid NOT NULL REFERENCES organisations(id) ON DELETE CASCADE,
   name text NOT NULL,
@@ -9,21 +9,21 @@ CREATE TABLE departments (
 );
 
 -- User ↔ Department membership
-CREATE TABLE user_departments (
+CREATE TABLE IF NOT EXISTS user_departments (
   user_id uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   department_id uuid NOT NULL REFERENCES departments(id) ON DELETE CASCADE,
   PRIMARY KEY (user_id, department_id)
 );
 
 -- Document ↔ Department scoping (no rows = org-wide)
-CREATE TABLE document_departments (
+CREATE TABLE IF NOT EXISTS document_departments (
   document_id uuid NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
   department_id uuid NOT NULL REFERENCES departments(id) ON DELETE CASCADE,
   PRIMARY KEY (document_id, department_id)
 );
 
 -- Explicit per-user document shares (for guest access)
-CREATE TABLE document_shares (
+CREATE TABLE IF NOT EXISTS document_shares (
   document_id uuid NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
   user_id uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   PRIMARY KEY (document_id, user_id)
@@ -36,11 +36,14 @@ ALTER TABLE documents
 
 -- Guest role and expiry on users
 ALTER TABLE users
-  ADD COLUMN expires_at timestamptz,
+  ADD COLUMN IF NOT EXISTS expires_at timestamptz;
+ALTER TABLE users
+  DROP CONSTRAINT IF EXISTS users_role_check;
+ALTER TABLE users
   ADD CONSTRAINT users_role_check CHECK (role IN ('admin', 'member', 'guest'));
 
 -- Guest invite tokens
-CREATE TABLE guest_invites (
+CREATE TABLE IF NOT EXISTS guest_invites (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   org_id uuid NOT NULL REFERENCES organisations(id) ON DELETE CASCADE,
   email text NOT NULL,

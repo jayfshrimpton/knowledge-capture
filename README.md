@@ -79,6 +79,7 @@ the Supabase service-role key.
 | `invites` | Org invite tokens |
 | `ai_credits` | Per-org Gemini credit accounting |
 | `billing_*` | Stripe billing scaffolding (migration 006) |
+| `org_styles` | Per-org brand styles (fonts/colours/logo/structure) captured from a reference document; one `is_default` applied to all exports (migration 013) |
 
 Migrations live in `supabase/migrations/` (`001_initial_schema` → `011_search_logs`).
 Run all in order. Key ones: `008` enables dual-auth, `009` adds pgvector for search,

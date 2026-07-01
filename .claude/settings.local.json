@@ -5,7 +5,9 @@
       "Bash(xargs ls -la)",
       "Bash(grep -E \"\\\\.\\(md|txt\\)$\")",
       "Bash(npx tsc *)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "mcp__visualize__read_me",
+      "mcp__visualize__show_widget"
     ]
   }
 }

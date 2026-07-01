@@ -3,6 +3,7 @@ import { requireAuth, requireRole } from '../middleware/auth';
 import { supabaseAdmin } from '../lib/supabase';
 import { getVisibleDocIds } from '../lib/docAccess';
 import { exportDocument, ExportFormat } from '../services/exporter';
+import { getDefaultStyle } from '../services/styles';
 import { contentToText } from '../lib/contentToText';
 import { DocumentRow } from '../types';
 import { logger } from '../lib/logger';
@@ -174,7 +175,15 @@ router.post('/documents/:id/export', requireAuth, async (req, res) => {
   if (!data) return res.status(404).json({ error: 'Document not found' });
 
   try {
-    const result = await exportDocument(data as DocumentRow, format);
+    // Apply the org's default brand style, if one is set. Failure to load it is
+    // non-fatal — the exporter falls back to its built-in look.
+    let style = null;
+    try {
+      style = await getDefaultStyle(orgId);
+    } catch {
+      logger.warn('Default style load failed during export', { route: 'POST /api/documents/:id/export', errorType: 'StyleLoadError' });
+    }
+    const result = await exportDocument(data as DocumentRow, format, style);
     res.setHeader('Content-Type', result.contentType);
     res.setHeader('Content-Disposition', `attachment; filename="${result.filename}"`);
     res.send(result.buffer);
